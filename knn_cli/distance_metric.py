@@ -1,4 +1,5 @@
 from math import sqrt
+
 def euclidean(p: list[float], q: list[float]) -> float:
     distance_squared = 0
     pi, qi = 0, 0
@@ -30,14 +31,3 @@ def cosine(p: list[float], q: list[float]) -> float:
 
     similarity = 1 - (dot_product / (p_length * q_length))
     return similarity
-
-
-
-
-
-
-    """dot_product = (p1[0] * p2[0]) + (p1[1] * p2[1])
-    p1_magnitude = sqrt(p1[0] ** 2 + p1[1] ** 2)
-    p2_magnitude = sqrt(p2[0] ** 2 + p2[1] ** 2)
-    cos = dot_product / (p1_magnitude * p2_magnitude)
-    return 1 - cos"""

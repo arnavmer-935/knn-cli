@@ -1,7 +1,4 @@
 """
-    CSAP/X: KNN Classification Project
-    author: CS RIT
-
     Unit test cases to verify correctness of the distance_metric.py algorithms.
 
     This module contains test for:
