@@ -1,0 +1,24 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="knn words 3 animal cos" type="PythonConfigurationType" factoryName="Python">
+    <module name="knn" />
+    <option name="ENV_FILES" value="" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="PARENT_ENVS" value="true" />
+    <envs>
+      <env name="PYTHONUNBUFFERED" value="1" />
+    </envs>
+    <option name="SDK_HOME" value="" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="IS_MODULE_SDK" value="true" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/knn.py" />
+    <option name="PARAMETERS" value="dataset/words.data 3 --distance cos -- -1.084 0.50791 -0.35837 -0.091422 -0.26849 0.5802 -0.16188 0.41558 0.092878 -0.3424 0.47947 0.82177 -0.34267 0.33243 0.22465 0.78653 0.024355 0.065919 0.56544 0.56019 -0.81977 0.52764 -0.1712 -0.18541 0.67832 0.1481 -0.46396 0.14704 0.0010356 -0.27294 -1.3752 -0.12815 0.46038 1.0181 -0.032253 0.3473 0.032191 0.057371 0.78539 -0.24086 -0.021172 -0.39523 -0.32388 0.61625 0.44585 -0.34794 0.54995 -0.020947 -0.45395 -0.1251" />
+    <option name="SHOW_COMMAND_LINE" value="false" />
+    <option name="EMULATE_TERMINAL" value="false" />
+    <option name="MODULE_MODE" value="false" />
+    <option name="REDIRECT_INPUT" value="false" />
+    <option name="INPUT_FILE" value="" />
+    <method v="2" />
+  </configuration>
+</component>
