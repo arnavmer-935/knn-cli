@@ -11,19 +11,6 @@ class Distances(str, Enum):
     manh = "manh"
     cos = "cos"
 
-
-def find_min(distances: list[float]) -> int:
-    """
-    Helper method used to find the index of the smallest value in an array of floating point numbers.
-    :param distances: an array containing the distances between the query data and the training data points
-    :return: index at which smallest distance is located
-    """
-    min_index = 0
-    for i in range(1, len(distances)):
-        if distances[i] < distances[min_index]:
-            min_index = i
-    return min_index
-
 def get_columns(dataset):
     """
     Helper method for getting all the column names of a data.

@@ -1,33 +1,46 @@
 from math import sqrt
 
 def euclidean(p: list[float], q: list[float]) -> float:
+    if len(p) != len(q):
+        raise ValueError("Vectors must have equal lengths.")
+
+    if not p:
+        raise ValueError("Vectors must have at least 1 dimension.")
+
     distance_squared = 0
-    pi, qi = 0, 0
-    while pi < len(p) and qi < len(q):
-        distance_squared += (p[pi] - q[qi]) ** 2
-        pi += 1
-        qi += 1
+    for i in range(len(p)):
+        distance_squared += (p[i] - q[i]) ** 2
 
     return sqrt(distance_squared)
 
 def manhattan(p: list[float], q: list[float]) -> float:
+    if len(p) != len(q):
+        raise ValueError("Vectors must have equal lengths.")
+
+    if not p:
+        raise ValueError("Vectors must have at least 1 dimension.")
+
     m_distance = 0
-    pi, qi = 0, 0
-    while pi < len(p) and qi < len(q):
-        m_distance += abs(p[pi] - q[qi])
-        pi += 1
-        qi += 1
+    for i in range(len(p)):
+        m_distance += abs(p[i] - q[i])
+
     return m_distance
 
 def cosine(p: list[float], q: list[float]) -> float:
-    pi, qi, dot_product = 0, 0, 0
-    while pi < len(p) and qi < len(q):
-        dot_product += (p[pi] * q[qi])
-        pi += 1
-        qi += 1
+    if len(p) != len(q):
+        raise ValueError("Vectors must have equal lengths.")
+
+    if not p:
+        raise ValueError("Vectors must have at least 1 dimension.")
+
+    dot_product = 0
+    for i in range(len(p)):
+        dot_product += (p[i] * q[i])
 
     p_length = sqrt(sum(x ** 2 for x in p))
     q_length = sqrt(sum(x ** 2 for x in q))
 
-    similarity = 1 - (dot_product / (p_length * q_length))
-    return similarity
+    if p_length == 0 or q_length == 0:
+        raise ValueError("Cosine similarity is undefined for zero vectors.")
+
+    return 1 - (dot_product / (p_length * q_length))
