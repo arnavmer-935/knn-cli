@@ -9,6 +9,8 @@ def generate_plot(dataset, k, query_data, x, y, plot, user_datapoints, z = None)
     iv = get_columns(dataset)
     cts = get_categories(dataset) #e.g ["Setosa", "Virginica", "Versicolor"]
     column_values = get_column_values(dataset)
+
+
     print(column_values)
     used_colors = []
     x_values = []

@@ -67,7 +67,6 @@ def quartile_values_dataset(dataset):
     var_q1_map = {}
     var_q3_map = {}
     for k in data:
-        m = len(data[k])
         first_quartile_data = [x for x in data[k] if x < median(data[k])]
         third_quartile_data = [y for y in data[k] if y > median(data[k])]
         var_q1_map[k] = median(first_quartile_data)

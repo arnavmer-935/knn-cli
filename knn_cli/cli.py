@@ -2,7 +2,7 @@ import typer
 from typing import List, Annotated
 from .data_loader import load_dataset
 from .data_utils import get_categories, get_columns, Distances
-from .knn import calculate_distances, get_classification, k_nearest_distances
+from .knn import calculate_distances, get_classification, k_nearest_points
 from .visualization import generate_plot
 from .statistics import (mean_dataset, median_dataset, count_min_max, quartile_values_dataset, standard_deviation_dataset,
                          generate_desc_statistics)
@@ -61,8 +61,8 @@ def main(
         user_datapoints = load_dataset(dataset)
         user_feature_dist_map = calculate_distances(query_data, user_datapoints, distance.value)[0]
         user_distances_from_feature = calculate_distances(query_data, user_datapoints, distance.value)[1]
-        k_nearest_dists = k_nearest_distances(k, user_distances_from_feature)
-        query_data_prediction = get_classification(k_nearest_dists, user_feature_dist_map, user_datapoints)
+        k_nearest_dists = k_nearest_points(k, user_distances_from_feature)
+        query_data_prediction = get_classification(k_nearest_dists)
 
         print("Prediction:", query_data_prediction)
 
