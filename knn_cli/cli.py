@@ -1,10 +1,11 @@
 import typer
 from typing import List, Annotated
-from .data_loader import load_dataset
-from .data_utils import get_categories, get_columns, Distances
-from .knn import calculate_distances, get_classification, k_nearest_points
-from .visualization import generate_plot
-from .statistics import (mean_dataset, median_dataset, count_min_max, quartile_values_dataset, standard_deviation_dataset,
+
+from knn_cli.data_loader import load_dataset
+from knn_cli.data_utils import get_categories, Distances
+from knn_cli.knn import calculate_distances, get_classification, k_nearest_points
+from knn_cli.visualization import generate_plots
+from knn_cli.statistics import (mean_dataset, median_dataset, count_min_max, quartile_values_dataset, standard_deviation_dataset,
                          generate_desc_statistics)
 
 
@@ -38,37 +39,42 @@ def main(
     :return: None
     """
     try:
-        f = open(dataset)
-        mean_of_data = mean_dataset(dataset)
-        median_of_data = median_dataset(dataset)
-        data_count, data_min, data_max = count_min_max(dataset)
-        q1, q3 = quartile_values_dataset(dataset)
-        st_devs = standard_deviation_dataset(dataset)
-        cts = get_categories(dataset)
-        print(cts)
+        user_datapoints, feature_map = load_dataset(dataset)
+
+        categories = get_categories(dataset)
+
         print("KNN Classifier!")
         print("Training data:", dataset)
-        features_of_data = get_columns(dataset)
-        print("Number of features:", len(features_of_data))
+
+        print("Number of features:", len(feature_map))
         print("Categories:")
-        for c in cts:
-            print("\t" + c[0].upper() + c[1:].lower())
+
+        for cat in categories[:-1]:
+            print("\t" + cat[0].upper() + cat[1:].lower())
+
         print()
         print(f"Considering {k} nearest neighbors")
-        print("Distance:", distance.value)
+        print("Distance Metric:", distance.value)
         print("Query data point:", query_data)
 
-        user_datapoints = load_dataset(dataset)
-        user_feature_dist_map = calculate_distances(query_data, user_datapoints, distance.value)[0]
-        user_distances_from_feature = calculate_distances(query_data, user_datapoints, distance.value)[1]
-        k_nearest_dists = k_nearest_points(k, user_distances_from_feature)
+        distances = calculate_distances(query_data, user_datapoints, distance)
+        k_nearest_dists = k_nearest_points(k, distances)
         query_data_prediction = get_classification(k_nearest_dists)
 
         print("Prediction:", query_data_prediction)
 
-        generate_desc_statistics(describe, mean_of_data, data_count, data_min, data_max, q1, median_of_data, q3, st_devs)
+        if describe:
+            mean_of_data = mean_dataset(dataset)
+            median_of_data = median_dataset(dataset)
+            data_count, data_min, data_max = count_min_max(dataset)
+            q1, q3 = quartile_values_dataset(dataset)
+            st_devs = standard_deviation_dataset(dataset)
 
-        generate_plot(dataset, k, query_data, x, y, plot, user_datapoints)
+            generate_desc_statistics(describe, mean_of_data, data_count, data_min, data_max, q1, median_of_data, q3,
+                                     st_devs)
+
+        if plot:
+            generate_plots(dataset, k, query_data, x, y, z)
 
     except FileNotFoundError:
         print(f"Error: {dataset} does not exist")

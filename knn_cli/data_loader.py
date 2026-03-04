@@ -1,4 +1,4 @@
-from .data_utils import Datapoint
+from knn_cli.data_utils import Datapoint
 import csv
 
 def load_dataset(dataset: str):

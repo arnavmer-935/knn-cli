@@ -1,29 +1,27 @@
 from math import sqrt
-
 from rich.console import Console
 from rich.table import Table
-from .data_utils import get_column_values, median
+from knn_cli.data_utils import get_column_values, median
 
 def generate_desc_statistics(describe, mean_of_data, ct, min_v, max_v, q1, medians, q3, std):
-    if describe:
-        console = Console(width=800)
-        stats_table = Table("Feature", "Count", "Min", "Max", "25%", "50%", "75%", "Mean", "Std\nDev",
-                            title="Descriptive Statistics", title_justify="center")
-        for fea in mean_of_data:
-            stats_table.add_row(
-                fea,
-                f"{ct:.2f}",
-                f"{min_v[fea]:.2f}",
-                f"{max_v[fea]:.2f}",
-                f"{q1[fea]:.2f}",
-                f"{medians[fea]:.2f}",
-                f"{q3[fea]:.2f}",
-                f"{mean_of_data[fea]:.2f}",
-                f"{std[fea]:.2f}"
-            )
-        console.print(stats_table)
-    else:
-        pass
+    console = Console(width=800)
+    stats_table = Table("Feature", "Count", "Min", "Max", "25%", "50%", "75%", "Mean", "Std\nDev",
+                        title="Descriptive Statistics", title_justify="center")
+    for fea in mean_of_data:
+        stats_table.add_row(
+            fea,
+            f"{ct:.2f}",
+            f"{min_v[fea]:.2f}",
+            f"{max_v[fea]:.2f}",
+            f"{q1[fea]:.2f}",
+            f"{medians[fea]:.2f}",
+            f"{q3[fea]:.2f}",
+            f"{mean_of_data[fea]:.2f}",
+            f"{std[fea]:.2f}"
+        )
+
+    console.print(stats_table)
+
 
 def mean_dataset(dataset):
     """

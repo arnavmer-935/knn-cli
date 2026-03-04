@@ -1,5 +1,5 @@
-from .data_utils import Datapoint
-from .distance_metric import euclidean, manhattan, cosine
+from knn_cli.data_utils import Datapoint
+from knn_cli.distance_metric import euclidean, manhattan, cosine
 from collections import Counter
 
 #TODO: Rewrite Documentation
@@ -52,10 +52,7 @@ def get_classification(nearest_neighbors: list[Datapoint]):
     Uses the k nearest distances, a dictionary whose key is a training datapoint and value is distance from the point,
     and a list of Datapoint objects to find the categories of the nearest neighbors.
     Returns an array containing the k nearest neighbors' categories
-    :param nearest_distances: the k smallest distances between the query datapoint and training data datapoint.
-    :param feature_distance_map: a dictionary whose key is a datapoint in the training data, and value is the distance
-    between that point and query datapoint.
-    :param dataset_points: the list of datapoint objects obtained from loading the data
+    :param nearest_neighbors:
     :return: the prediction of the query datapoint based on the KNN algorithm
     """
 
