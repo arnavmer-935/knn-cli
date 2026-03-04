@@ -1,70 +1,85 @@
 from random import choice
 from matplotlib import pyplot as plt
-from .data_utils import get_columns, get_categories, get_column_values
 
-color_palette = ["red", "green", "blue", "cyan", "magenta", "yellow", "black", "white", "orange", "purple", "brown",
-                 "pink", "gray", "olive", "teal", "navy", "gold", "lime", "indigo", "turquoise"]
-
-def generate_plot(dataset, k, query_data, x, y, plot, user_datapoints, z = None):
-    iv = get_columns(dataset)
-    cts = get_categories(dataset) #e.g ["Setosa", "Virginica", "Versicolor"]
-    column_values = get_column_values(dataset)
+from .data_loader import load_dataset
 
 
-    print(column_values)
-    used_colors = []
-    x_values = []
-    y_values = []
-    z_values = []
-    categories = {x: "" for x in cts}
+color_palette = ["red","blue","green","orange","purple","brown","pink","gray","olive","cyan","magenta","gold",
+                 "teal","navy","coral","lime","indigo","turquoise","maroon","darkgreen","darkblue","darkorange",
+                 "slateblue","crimson","peru","orchid","dodgerblue","forestgreen","darkviolet","chocolate"]
+
+
+def generate_plots(dataset, k, query_data, x: str, y, plot: bool, z = None):
+
+    datapoints, feature_map = load_dataset(dataset)
     if plot:
-        if x in iv and y in iv and z is None:
-            for p in user_datapoints:
-                for i in range(len(x_values)):
-                    x_values[i].append(p.features[iv.index(x)])
+        if x in feature_map and y in feature_map:
+            groups = {}
+            x_index = feature_map[x]
+            y_index = feature_map[y]
 
-            for p in user_datapoints:
-                for i in range(len(y_values)):
-                    y_values[i].append(p.features[iv.index(y)])
-            print(x_values)
-            print(y_values)
+            if z in feature_map:
+                z_index = feature_map[z]
+            else:
+                z_index = None
+
+            for point in datapoints:
+                if point.category not in groups:
+                    groups[point.category] = []
+
+                if z_index is not None:
+                    coordinate = (point.features[x_index], point.features[y_index], point.features[z_index])
+                else:
+                    coordinate = (point.features[x_index], point.features[y_index])
+
+                groups[point.category].append(coordinate)
+
+            legend = map_colors_to_categories(groups)
             plt.title(f"KNN Classifier, k = {k}")
             plt.xlabel(x)
             plt.ylabel(y)
-            """for i in range(len(x_values)):
-                color = choice([c for c in color_palette if c not in used_colors])
-                color_list = [color] * len(x_values[i])
-                print(color)
-                used_colors.append(color)
-                plt.scatter(x_values[i], y_values[i], c=color_list, marker='o', edgecolors='green', linewidths=1, s=90)
 
-            plt.scatter(query_data[iv.index(x)], query_data[iv.index(y)], marker="*", s=90)
-            plt.show()"""
-            plt.scatter(x_values, y_values, c=used_colors, marker="o", edgecolors="green", linewidths=1)
-            plt.scatter(query_data[query_data.index(x)], query_data[query_data.index(y)])
-            plt.show()
-        elif x in iv and y in iv and z in iv:
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            plt.title(f"KNN Classifier, k = {k}")
+            if z_index is None:
+                fig, ax = plt.subplots()
+            else:
+                fig = plt.figure()
+                ax = fig.add_subplot(111, projection='3d')
+
+            ax.set_title(f"KNN Classifier, k = {k}")
             ax.set_xlabel(x)
             ax.set_ylabel(y)
-            ax.set_zlabel(z)
-            for i in range(len(x_values)):
-                new_col = [choice([c for c in color_palette if c not in used_colors])] * len(x_values[i])
-                print(new_col)
-                used_colors.append(new_col)
-                ax.scatter(x_values[i], y_values[i], z_values[i], c=new_col, marker='o', edgecolors='green', linewidths=1,
-                           s=90)
-            ax.scatter(query_data[iv.index(x)], query_data[iv.index(y)], query_data[iv.index(y)], marker="*", s=90)
+            if z_index is not None:
+                ax.set_zlabel(z)
+
+            for category_color, category in legend.items(): #key: color, value: category
+                plot_points = groups[category]
+
+                x_points = [p[0] for p in plot_points]
+                y_points = [p[1] for p in plot_points]
+                if z_index is None:
+                    ax.scatter(x_points, y_points, color = category_color,
+                                label = category, marker='o', edgecolors='black',
+                                alpha=0.7, linewidths=1, s=90)
+
+                else:
+                    z_points = [p[2] for p in plot_points]
+                    ax.scatter(x_points, y_points, z_points, color = category_color,
+                                label = category, marker='o', edgecolors='black',
+                                alpha=0.7, linewidths=1, s=90)
+
+            ax.legend()
             plt.show()
-        elif x is None or y is None:
-            print("Error: x and y axes labels are required when plot mode is enabled.")
-        elif x not in iv:
-            print(f"Error: column name {x} not found in the training data.")
-        elif y not in iv:
-            print(f"Error: column name {y} not found in the training data.")
-        else:
-            pass
-    else:
-        pass
+
+def map_colors_to_categories(groups):
+    used_colors = set()
+    colors = []
+
+    for _ in range(len(groups)):
+        chosen = choice(color_palette)
+        while chosen in used_colors:
+            chosen = choice(color_palette)
+
+        colors.append(chosen)
+        used_colors.add(chosen)
+
+    return dict(zip(colors, groups.keys()))
