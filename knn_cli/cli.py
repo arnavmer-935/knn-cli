@@ -2,7 +2,7 @@ import typer
 from typing import Annotated
 
 from knn_cli.data_loader import load_dataset
-from knn_cli.data_utils import get_categories, Distances
+from knn_cli.data_utils import get_categories, Distances, validate_args
 from knn_cli.knn import calculate_distances, get_classification, k_nearest_points
 from knn_cli.visualization import generate_plots
 from knn_cli.statistics import (mean_dataset, median_dataset, count_min_max, quartile_values_dataset, standard_deviation_dataset,
@@ -39,6 +39,8 @@ def main(
     :return: None
     """
     try:
+        validate_args(dataset, k, query_data, x, y, z)
+
         user_datapoints, feature_map = load_dataset(dataset)
 
         categories = get_categories(dataset)
@@ -52,12 +54,14 @@ def main(
         for cat in categories[:-1]:
             print("\t" + cat[0].upper() + cat[1:].lower())
 
+        query_point = [float(x) for x in query_data.strip().split()]
+
         print()
         print(f"Considering {k} nearest neighbors")
         print("Distance Metric:", distance.value)
         print("Query data point:", query_data)
 
-        distances = calculate_distances(query_data, user_datapoints, distance)
+        distances = calculate_distances(query_point, user_datapoints, distance)
         k_nearest_dists = k_nearest_points(k, distances)
         query_data_prediction = get_classification(k_nearest_dists)
 
@@ -76,8 +80,9 @@ def main(
         if plot:
             generate_plots(dataset, k, query_data, x, y, z)
 
-    except FileNotFoundError:
-        print(f"Error: {dataset} does not exist")
+    except ValueError as e:
+        print(e)
+        raise typer.Exit(code = 1)
 
 if __name__ == '__main__':
     typer.run(main)

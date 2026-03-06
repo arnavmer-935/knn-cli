@@ -3,6 +3,8 @@ from rich.console import Console
 from rich.table import Table
 from knn_cli.data_utils import get_column_values, median
 
+#TODO: refactor redundant load_dataset operations
+
 def generate_desc_statistics(describe, mean_of_data, ct, min_v, max_v, q1, medians, q3, std):
     console = Console(width=800)
     stats_table = Table("Feature", "Count", "Min", "Max", "25%", "50%", "75%", "Mean", "Std\nDev",

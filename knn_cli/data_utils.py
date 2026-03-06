@@ -1,6 +1,5 @@
 import os.path
 import csv
-from math import isnan
 from dataclasses import dataclass
 from enum import Enum
 
@@ -74,7 +73,7 @@ def get_categories(dataset):
         return ls
 
 
-def args_valid(dataset: str, k: int, query_data, x, y, z):
+def validate_args(dataset: str, k: int, query_data, x, y, z):
     if k <= 0:
         raise ValueError("The value of k must be positive.")
 

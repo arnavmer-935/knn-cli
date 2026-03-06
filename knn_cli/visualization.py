@@ -2,6 +2,7 @@ from random import choice
 from matplotlib import pyplot as plt
 from knn_cli.data_loader import load_dataset
 
+#TODO: refactor redundant load_dataset operations
 
 color_palette = ["red","blue","green","orange","purple","brown","pink","gray","olive","cyan","magenta","gold",
                  "teal","navy","coral","lime","indigo","turquoise","maroon","darkgreen","darkblue","darkorange",
