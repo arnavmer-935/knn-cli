@@ -39,8 +39,6 @@ def k_nearest_points(k: int, distances: list[tuple[float, Datapoint]]) -> list[D
     :param distances: an array containing the distances between the query data and the training data points
     :return: a sub-array pof distances which has the k smallest distances
     """
-    if k <= 0:
-        raise ValueError("The value of k must be positive")
 
     sorted_distances = sorted(distances, key = lambda x: x[0]) #sort by distance from datapoint
     k_nearest = sorted_distances[:k]

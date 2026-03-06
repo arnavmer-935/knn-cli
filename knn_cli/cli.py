@@ -1,5 +1,5 @@
 import typer
-from typing import List, Annotated
+from typing import Annotated
 
 from knn_cli.data_loader import load_dataset
 from knn_cli.data_utils import get_categories, Distances
@@ -8,18 +8,18 @@ from knn_cli.visualization import generate_plots
 from knn_cli.statistics import (mean_dataset, median_dataset, count_min_max, quartile_values_dataset, standard_deviation_dataset,
                          generate_desc_statistics)
 
-
 def main(
-    dataset: str = typer.Argument(help="a comma separated training data file."),
-    k: int = typer.Argument(help="the number of nearest neighbors to be considered."),
-    query_data: List[float] = typer.Argument(help="the query data point's feature values separated by whitespace."),
-    distance: Annotated[Distances, typer.Option(help = "the distance metric", case_sensitive = False)] = Distances.eucl,
+    dataset: str = typer.Argument("-d", help="a comma separated training data file."),
+    k: int = typer.Argument("-k", help="the number of nearest neighbors to be considered."),
+    query_data: Annotated[str, typer.Option("--p", help="the query data point's feature values separated by whitespace.")] = None,
+    distance: Annotated[Distances, typer.Option("--m", help = "the distance metric", case_sensitive = False)] = Distances.eucl,
     describe: Annotated[bool, typer.Option(help="display in the standard output descriptive statistics of the data")] = False,
     plot: Annotated[bool, typer.Option(help="enables plotting mode")] = False,
     x: Annotated[str, typer.Option(help="label for the x axis")] = None,
     y: Annotated[str, typer.Option(help="label for the y axis")] = None,
-    z: Annotated[str, typer.Option(help="label for the z axis (used only in 3D plots")] = None
+    z: Annotated[str, typer.Option(help="label for the z axis (used only in 3D plots")] = None,
 ):
+
     """
     The main function of the program responsible for setting up the CLI, parsing command line arguments, classifying
     query data based on the KNN algorithm, providing descriptive statistics about the data, and generating plots to

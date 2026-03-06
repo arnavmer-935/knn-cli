@@ -1,3 +1,6 @@
+import os.path
+import csv
+from math import isnan
 from dataclasses import dataclass
 from enum import Enum
 
@@ -69,3 +72,54 @@ def get_categories(dataset):
     with open(dataset) as f:
         ls = list(set([l.strip().split(",")[-1] for l in f.readlines()]))
         return ls
+
+
+def args_valid(dataset: str, k: int, query_data, x, y, z):
+    if k <= 0:
+        raise ValueError("The value of k must be positive.")
+
+    if not os.path.isfile(dataset):
+        raise ValueError(f"Dataset file: {dataset} is invalid.")
+
+    with open(dataset, newline='') as file:
+        reader = csv.DictReader(file)
+
+        if reader.fieldnames is None:
+            raise ValueError("Dataset is empty or malformed.")
+
+        column_count = len(reader.fieldnames)
+        if column_count <= 2:
+            raise ValueError("Insufficient columns in dataset file. Expected at least 3 columns.")
+
+        query_pt = query_data.strip().split()
+        if len(query_pt) == 0:
+            raise ValueError("Query datapoint is empty.")
+
+        if column_count - 1 != len(query_pt):
+            raise ValueError("Number of feature columns in dataset does not match the dimensions of query point.")
+
+        for val in query_pt:
+            try:
+                numeric = float(val)
+            except ValueError:
+                raise ValueError("Query datapoint contains non-numerical data.")
+
+        linecount = 0
+        for _ in reader:
+            linecount += 1
+
+        if k > linecount:
+            raise ValueError("Value of k cannot exceed the size of dataset.")
+
+        feature_set = set(reader.fieldnames)
+        if x is not None:
+            if x not in feature_set:
+                raise ValueError(f"Feature column {x} does not exist in dataset.")
+
+        if y is not None:
+            if y not in feature_set:
+                raise ValueError(f"Feature column {y} does not exist in dataset.")
+
+        if z is not None:
+            if z not in feature_set:
+                raise ValueError(f"Feature column {z} does not exist in dataset.")
