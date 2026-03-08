@@ -1,9 +1,9 @@
 from random import choice
 from matplotlib import pyplot as plt
 
-color_palette = ["red","blue","green","orange","purple","brown","pink","gray","olive","cyan","magenta","gold",
+color_palette = ["red","blue","green","orange","purple","brown","pink","gray","olive","cyan","magenta",
                  "teal","navy","coral","lime","indigo","turquoise","maroon","darkgreen","darkblue","darkorange",
-                 "slateblue","crimson","peru","orchid","dodgerblue","forestgreen","darkviolet","chocolate"]
+                 "slateblue","crimson","peru","dodgerblue","forestgreen","darkviolet","chocolate"]
 
 def generate_plots(datapoints, feature_map, k, query_pt, x, y, z):
 
@@ -30,10 +30,14 @@ def generate_plots(datapoints, feature_map, k, query_pt, x, y, z):
         if z_index is None:
             fig, ax = plt.subplots()
         else:
-            fig = plt.figure()
+            fig = plt.figure(figsize=(10,8))
             ax = fig.add_subplot(111, projection='3d')
 
-        ax.set_title(f"KNN Classifier, k = {k}")
+        ax.set_title(
+            f"KNN Classification (k = {k})",
+            fontsize=14,
+            fontweight="bold"
+        )
         ax.set_xlabel(x)
         ax.set_ylabel(y)
         if z_index is not None:
@@ -44,22 +48,34 @@ def generate_plots(datapoints, feature_map, k, query_pt, x, y, z):
         for category_color, category in legend.items(): #key: color, value: category
             plot_points = groups[category]
 
-            x_points = [p[0] for p in plot_points] #originally p[0]
-            y_points = [p[1] for p in plot_points] #originally p[1]
+            x_points = [p[0] for p in plot_points]
+            y_points = [p[1] for p in plot_points]
             if z_index is None:
                 ax.scatter(x_points, y_points, color = category_color,
                             label = category, marker='o', edgecolors="black",
-                            alpha=0.7, linewidths=1, s=90)
-                ax.scatter(query_data[x_index], query_data[y_index], color="black", marker="*", s=90)
+                            alpha=0.5, linewidths=1, s=90)
 
             else:
-                z_points = [p[2] for p in plot_points] #originally p[2]
+                z_points = [p[2] for p in plot_points]
                 ax.scatter(x_points, y_points, z_points, color = category_color,
                             label = category, marker='o', edgecolors="black",
-                            alpha=0.7, linewidths=1, s=90)
-                ax.scatter(query_data[x_index], query_data[y_index], query_data[z_index], color="black", marker="*", s=90)
+                            alpha=0.5, linewidths=1, s=90)
 
-        ax.legend()
+        if z_index is None:
+            ax.scatter(query_data[x_index], query_data[y_index], color="yellow", edgecolors="black", marker="*",
+                       s=350, linewidths=2, zorder=10, label="Query Point")
+        else:
+            ax.scatter(query_data[x_index], query_data[y_index], query_data[z_index], color="yellow",
+                       edgecolors="black", marker="*",
+                       s=350, linewidths=2, zorder=10, label="Query Point", depthshade="False")
+
+        ax.legend(
+            loc="upper left",
+            bbox_to_anchor=(1, 1),
+            frameon=True
+        )
+
+        ax.grid(True, linestyle="--", alpha=0.3)
 
         plt.show()
 

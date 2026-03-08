@@ -1,7 +1,9 @@
 import typer
 from typing import Annotated
 
+from rich.align import Align
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Table
 from knn_cli.data_loader import load_dataset
 from knn_cli.data_utils import Distances, get_column_values, validate_prediction_args, validate_dataset_args
@@ -12,8 +14,10 @@ from knn_cli.statistics import (mean_dataset, median_dataset, count_min_max, qua
 
 def display_config(dataset, k, query_pt, distance, describe, plot, x, y, z):
 
-    cli_console = Console(width=800)
-    config_table = Table("Attribute", "Value", title="Configuration Attributes", title_justify="center")
+    cli_console = Console()
+    config_table = Table()
+    config_table.add_column("Attribute")
+    config_table.add_column("Value")
 
     x = "N/A" if x is None else x
     y = "N/A" if y is None else y
@@ -30,7 +34,7 @@ def display_config(dataset, k, query_pt, distance, describe, plot, x, y, z):
     config_table.add_row("Plot Label for y-axis", y)
     config_table.add_row("Plot Label for z-axis", z)
 
-    cli_console.print(config_table)
+    cli_console.print(config_table, justify="center")
 
 def main(
     dataset: str = typer.Argument("-d", help="a comma separated training data file."),
@@ -67,6 +71,7 @@ def main(
     console = Console()
     try:
         if confirm:
+            console.rule("[bold cyan] Configuration Attributes")
             display_config(dataset, k, query_data, distance, describe, plot, x, y, z)
 
             if not typer.confirm("Proceed?"):
@@ -83,8 +88,13 @@ def main(
         k_nearest_dists = k_nearest_points(k, distances)
         query_data_prediction = get_classification(k_nearest_dists)
 
-        console.rule("[bold cyan]Classification Result")
-        console.print(f"[bold green]Prediction:[/bold green] {query_data_prediction}")
+        console.print(
+            Panel(
+                Align.center(f"[bold green]{query_data_prediction}[/bold green]"),
+                title="Prediction",
+                border_style="green"
+            )
+        )
 
         console.rule("[bold cyan]Dataset Summary")
         print("Number of features:", len(feature_map))

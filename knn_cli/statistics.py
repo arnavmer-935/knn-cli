@@ -1,4 +1,6 @@
 from math import sqrt
+
+from rich.align import Align
 from rich.console import Console
 from rich.table import Table
 from knn_cli.data_utils import median
@@ -6,7 +8,7 @@ from knn_cli.data_utils import median
 #TODO: rewrite documentation
 
 def generate_desc_statistics(mean_of_data, ct, min_v, max_v, q1, medians, q3, std):
-    console = Console(width=800)
+    console = Console()
     stats_table = Table("Feature", "Count", "Min", "Max", "25%", "50%", "75%",
                         "Mean", "Std\nDev", title_justify="center")
     for fea in mean_of_data:
@@ -22,8 +24,7 @@ def generate_desc_statistics(mean_of_data, ct, min_v, max_v, q1, medians, q3, st
             f"{std[fea]:.2f}"
         )
 
-    console.print(stats_table)
-
+    console.print(stats_table, justify="center")
 
 def mean_dataset(column_values):
     """
