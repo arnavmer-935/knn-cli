@@ -3,7 +3,7 @@ from rich.console import Console
 from rich.table import Table
 from knn_cli.data_utils import median
 
-#TODO: refactor redundant load_dataset operations
+#TODO: rewrite documentation
 
 def generate_desc_statistics(mean_of_data, ct, min_v, max_v, q1, medians, q3, std):
     console = Console(width=800)
@@ -28,7 +28,7 @@ def generate_desc_statistics(mean_of_data, ct, min_v, max_v, q1, medians, q3, st
 def mean_dataset(column_values):
     """
     Calculates the average values of each independent variable.
-    :param dataset: file path of data #TODO: rewrite
+    :param dataset: file path of data
     :return: dictionary whose key is the variable name and value is its average
     """
     var_mean_map ={}

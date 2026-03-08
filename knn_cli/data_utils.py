@@ -1,5 +1,4 @@
 import os.path
-import csv
 from dataclasses import dataclass
 from enum import Enum
 
