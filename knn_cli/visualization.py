@@ -5,17 +5,16 @@ color_palette = ["red","blue","green","orange","purple","brown","pink","gray","o
                  "teal","navy","coral","lime","indigo","turquoise","maroon","darkgreen","darkblue","darkorange",
                  "slateblue","crimson","peru","orchid","dodgerblue","forestgreen","darkviolet","chocolate"]
 
-def generate_plots(datapoints, feature_map, k, query_data, x, y, z):
+def generate_plots(datapoints, feature_map, k, query_pt, x, y, z):
 
     if x in feature_map and y in feature_map:
         groups = {}
         x_index = feature_map[x]
         y_index = feature_map[y]
 
-        if z in feature_map:
-            z_index = feature_map[z]
-        else:
-            z_index = None
+        z_index = feature_map[z] if z in feature_map else None
+
+        query_data = [float(x) for x in query_pt.strip().split()]
 
         for point in datapoints:
             if point.category not in groups:
@@ -45,8 +44,8 @@ def generate_plots(datapoints, feature_map, k, query_data, x, y, z):
         for category_color, category in legend.items(): #key: color, value: category
             plot_points = groups[category]
 
-            x_points = [p[0] for p in plot_points]
-            y_points = [p[1] for p in plot_points]
+            x_points = [p[0] for p in plot_points] #originally p[0]
+            y_points = [p[1] for p in plot_points] #originally p[1]
             if z_index is None:
                 ax.scatter(x_points, y_points, color = category_color,
                             label = category, marker='o', edgecolors="black",
@@ -54,7 +53,7 @@ def generate_plots(datapoints, feature_map, k, query_data, x, y, z):
                 ax.scatter(query_data[x_index], query_data[y_index], color="black", marker="*", s=90)
 
             else:
-                z_points = [p[2] for p in plot_points]
+                z_points = [p[2] for p in plot_points] #originally p[2]
                 ax.scatter(x_points, y_points, z_points, color = category_color,
                             label = category, marker='o', edgecolors="black",
                             alpha=0.7, linewidths=1, s=90)

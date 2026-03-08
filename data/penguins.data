@@ -1,10 +1,4 @@
-island,bill_length_mm,bill_depth_mm,flipper_length_mm,body_mass_g,sex,year
-# Categories:
-#   - Adelie
-#   - Chinstrap
-#   - Gentoo
-# value 0 represents year 2007
-# male: 1, female:0
+island,bill_length_mm,bill_depth_mm,flipper_length_mm,body_mass_g,sex,year, category
 2,39.1,18.7,181,3750,1,0,Adelie
 2,39.5,17.4,186,3800,0,0,Adelie
 2,40.3,18,195,3250,0,0,Adelie

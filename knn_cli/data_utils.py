@@ -8,9 +8,9 @@ class Datapoint:
     category: str
 
 class Distances(str, Enum):
-    eucl = "eucl"
-    manh = "manh"
-    cos = "cos"
+    eucl = "Euclidean"
+    manh = "Manhattan"
+    cos = "Cosine Similarity"
 
 def get_column_values(datapoints, feature_map):
     """
@@ -59,8 +59,8 @@ def validate_prediction_args(dataset: str, k: int, query_data):
     if k <= 0:
         raise ValueError("The value of k must be positive.")
 
-    query_pt = query_data.strip().split()
-    if len(query_pt) == 0:
+    query_pt = query_data.strip().split(" ")
+    if not query_pt:
         raise ValueError("Query datapoint is empty.")
 
     for val in query_pt:
@@ -69,7 +69,7 @@ def validate_prediction_args(dataset: str, k: int, query_data):
         except ValueError:
             raise ValueError("Query datapoint contains non-numerical data.")
 
-def validate_dataset_args(datapoints, feature_map, k, query_pt, x, y, z):
+def validate_dataset_args(datapoints, feature_map, k, query_data, x, y, z):
     if k > len(datapoints):
         raise ValueError("Value of k cannot exceed the size of dataset.")
 
@@ -79,6 +79,7 @@ def validate_dataset_args(datapoints, feature_map, k, query_pt, x, y, z):
     if len(feature_map) <= 2:
         raise ValueError("Insufficient columns in dataset file. Expected at least 3 columns.")
 
+    query_pt = query_data.strip().split()
     if len(query_pt) != len(feature_map):
         raise ValueError("Number of feature columns in dataset does not match the dimensions of query point.")
 

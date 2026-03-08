@@ -7,8 +7,8 @@ from knn_cli.data_utils import median
 
 def generate_desc_statistics(mean_of_data, ct, min_v, max_v, q1, medians, q3, std):
     console = Console(width=800)
-    stats_table = Table("Feature", "Count", "Min", "Max", "25%", "50%", "75%", "Mean", "Std\nDev",
-                        title="Descriptive Statistics", title_justify="center")
+    stats_table = Table("Feature", "Count", "Min", "Max", "25%", "50%", "75%",
+                        "Mean", "Std\nDev", title_justify="center")
     for fea in mean_of_data:
         stats_table.add_row(
             fea,
@@ -79,11 +79,10 @@ def count_min_max(column_values):
     dict whose key is variable name and value is its max
     """
 
-    count = 0
+    count = len(next(iter(column_values.values())))
     min_map = {}
     max_map = {}
     for var in column_values:
-        count += len(column_values[var])
         min_map[var] = min(column_values[var])
         max_map[var] = max(column_values[var])
     return count, min_map, max_map

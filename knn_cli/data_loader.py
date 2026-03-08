@@ -26,7 +26,6 @@ def load_dataset(dataset: str):
                 datapoint = Datapoint(tuple(feature_vals), category)
                 datapoints.append(datapoint)
 
-
     except FileNotFoundError:
         print(f"Error: {dataset} does not exist.")
 
