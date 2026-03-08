@@ -13,37 +13,17 @@ class Distances(str, Enum):
     manh = "manh"
     cos = "cos"
 
-def get_columns(dataset):
-    """
-    Helper method for getting all the column names of a data.
-    :param dataset: file path for data
-    :return: list containing the column names
-    """
-    with open(dataset) as f:
-        cols = f.readlines()[0].strip().split(",")
-        return cols
-
-def get_column_values(dataset):
+def get_column_values(datapoints, feature_map):
     """
     Helper method for getting all the values of each column.
     :param dataset: file path for data
     :return: a dictionary whose key is the column name and value is a list containing all of its column values.
     """
-    column_map = {}
-    cols = get_columns(dataset)
-    column_values = [[] for _ in range(len(cols))]
-    with open(dataset) as d:
-        data = d.readlines()
-        for row in data:
-            if not row[0].isdigit():
-               continue
-            else:
-                row = row.strip().split(",")
-                for i in range(len(row)-1):
-                    column_values[i].append(float(row[i]))
+    column_map = {feature : [] for feature in feature_map}
 
-        for i in range(len(cols)):
-            column_map[cols[i]] = column_values[i]
+    for point in datapoints:
+        for feature, idx in feature_map.items():
+            column_map[feature].append(point.features[idx])
 
     return column_map #returns dict with key as i/d variable name and value as all its data in a list
 
@@ -73,52 +53,44 @@ def get_categories(dataset):
         return ls
 
 
-def validate_args(dataset: str, k: int, query_data, x, y, z):
-    if k <= 0:
-        raise ValueError("The value of k must be positive.")
-
+def validate_prediction_args(dataset: str, k: int, query_data):
     if not os.path.isfile(dataset):
         raise ValueError(f"Dataset file: {dataset} is invalid.")
 
-    with open(dataset, newline='') as file:
-        reader = csv.DictReader(file)
+    if k <= 0:
+        raise ValueError("The value of k must be positive.")
 
-        if reader.fieldnames is None:
-            raise ValueError("Dataset is empty or malformed.")
+    query_pt = query_data.strip().split()
+    if len(query_pt) == 0:
+        raise ValueError("Query datapoint is empty.")
 
-        column_count = len(reader.fieldnames)
-        if column_count <= 2:
-            raise ValueError("Insufficient columns in dataset file. Expected at least 3 columns.")
+    for val in query_pt:
+        try:
+            numeric = float(val)
+        except ValueError:
+            raise ValueError("Query datapoint contains non-numerical data.")
 
-        query_pt = query_data.strip().split()
-        if len(query_pt) == 0:
-            raise ValueError("Query datapoint is empty.")
+def validate_dataset_args(datapoints, feature_map, k, query_pt, x, y, z):
+    if k > len(datapoints):
+        raise ValueError("Value of k cannot exceed the size of dataset.")
 
-        if column_count - 1 != len(query_pt):
-            raise ValueError("Number of feature columns in dataset does not match the dimensions of query point.")
+    if feature_map is None:
+        raise ValueError("Dataset is empty or malformed.")
 
-        for val in query_pt:
-            try:
-                numeric = float(val)
-            except ValueError:
-                raise ValueError("Query datapoint contains non-numerical data.")
+    if len(feature_map) <= 2:
+        raise ValueError("Insufficient columns in dataset file. Expected at least 3 columns.")
 
-        linecount = 0
-        for _ in reader:
-            linecount += 1
+    if len(query_pt) != len(feature_map):
+        raise ValueError("Number of feature columns in dataset does not match the dimensions of query point.")
 
-        if k > linecount:
-            raise ValueError("Value of k cannot exceed the size of dataset.")
+    if x is not None:
+        if x not in feature_map:
+            raise ValueError(f"Feature column {x} does not exist in dataset.")
 
-        feature_set = set(reader.fieldnames)
-        if x is not None:
-            if x not in feature_set:
-                raise ValueError(f"Feature column {x} does not exist in dataset.")
+    if y is not None:
+        if y not in feature_map:
+            raise ValueError(f"Feature column {y} does not exist in dataset.")
 
-        if y is not None:
-            if y not in feature_set:
-                raise ValueError(f"Feature column {y} does not exist in dataset.")
-
-        if z is not None:
-            if z not in feature_set:
-                raise ValueError(f"Feature column {z} does not exist in dataset.")
+    if z is not None:
+        if z not in feature_map:
+            raise ValueError(f"Feature column {z} does not exist in dataset.")

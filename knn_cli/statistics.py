@@ -1,11 +1,11 @@
 from math import sqrt
 from rich.console import Console
 from rich.table import Table
-from knn_cli.data_utils import get_column_values, median
+from knn_cli.data_utils import median
 
 #TODO: refactor redundant load_dataset operations
 
-def generate_desc_statistics(describe, mean_of_data, ct, min_v, max_v, q1, medians, q3, std):
+def generate_desc_statistics(mean_of_data, ct, min_v, max_v, q1, medians, q3, std):
     console = Console(width=800)
     stats_table = Table("Feature", "Count", "Min", "Max", "25%", "50%", "75%", "Mean", "Std\nDev",
                         title="Descriptive Statistics", title_justify="center")
@@ -25,86 +25,82 @@ def generate_desc_statistics(describe, mean_of_data, ct, min_v, max_v, q1, media
     console.print(stats_table)
 
 
-def mean_dataset(dataset):
+def mean_dataset(column_values):
     """
     Calculates the average values of each independent variable.
-    :param dataset: file path of data
+    :param dataset: file path of data #TODO: rewrite
     :return: dictionary whose key is the variable name and value is its average
     """
-    kv_pair = get_column_values(dataset)
     var_mean_map ={}
-    for key in kv_pair:
-        var_mean_map[key] = round(sum(kv_pair[key]) / len(kv_pair[key]), 2)
+    for key in column_values:
+        var_mean_map[key] = round(sum(column_values[key]) / len(column_values[key]), 2)
 
     return var_mean_map
 
-def median_dataset(dataset):
+def median_dataset(column_values):
     """
     Calculates the median value (50th percentile) of each independent variable
     :param dataset: rfile path of the data
     :return: dictionary whose key is the variable name and the value is its median
     """
-    var_values = get_column_values(dataset)
     var_median_map = {}
-    for key in var_values:
-        n = len(var_values[key])
-        var_values[key] = sorted(var_values[key])
+    for key in column_values:
+        n = len(column_values[key])
+        column_values[key] = sorted(column_values[key])
         if n % 2 != 0:
-            var_median_map[key] = var_values[key][n//2]
+            var_median_map[key] = column_values[key][n//2]
         else:
-            var_median_map[key] = (var_values[key][n//2] + var_values[key][n//2 - 1]) / 2
+            var_median_map[key] = (column_values[key][n//2] + column_values[key][n//2 - 1]) / 2
 
     return var_median_map
 
-def quartile_values_dataset(dataset):
+def quartile_values_dataset(column_values):
     """
     Calculates the 25th percentile and 75th percentile values for each independent variable.
     :param dataset: file path for data
     :return: a tuple of 2 dictionaries - both have their keys as the variable name, but the value for one is the 25th percentile
     and the other's value is its 75th percentile
     """
-    data = get_column_values(dataset)
     var_q1_map = {}
     var_q3_map = {}
-    for k in data:
-        first_quartile_data = [x for x in data[k] if x < median(data[k])]
-        third_quartile_data = [y for y in data[k] if y > median(data[k])]
+    for k in column_values:
+        first_quartile_data = [x for x in column_values[k] if x < median(column_values[k])]
+        third_quartile_data = [y for y in column_values[k] if y > median(column_values[k])]
         var_q1_map[k] = median(first_quartile_data)
         var_q3_map[k] = median(third_quartile_data)
 
     return var_q1_map, var_q3_map
 
-def count_min_max(dataset):
+def count_min_max(column_values):
     """
     Calculates the count, minimum value and maximum value of each independent variable.
     :param dataset: file path for data
     :return: tuple containing count, dict whose key is variable name and value is its min,
     dict whose key is variable name and value is its max
     """
-    ls = open(dataset).readlines()[1:] #ignores line containing columns
-    filtered_ls = [l for l in ls if not l.strip() or "#" not in l.strip() or l[0].isalpha()]
-    c = len(filtered_ls)
-    vals = get_column_values(dataset)
+
+    count = 0
     min_map = {}
     max_map = {}
-    for var in vals:
-        min_map[var] = min(vals[var])
-        max_map[var] = max(vals[var])
-    return c, min_map, max_map
+    for var in column_values:
+        count += len(column_values[var])
+        min_map[var] = min(column_values[var])
+        max_map[var] = max(column_values[var])
+    return count, min_map, max_map
 
-def standard_deviation_dataset(dataset):
+def standard_deviation_dataset(column_values):
     """
     Calculates the standard deviation about the mean for each independent variable
     :param dataset: file path for data
     :return: dictionary whose key is the variable name and value is its standard deviation about the mean
     """
-    d = get_column_values(dataset)
     squared_diffs = []
     var_std_map = {}
-    for variable in d:
-        var_mean = sum(d[variable]) / len(d[variable])
-        for val in d[variable]:
+    for variable in column_values:
+        var_mean = sum(column_values[variable]) / len(column_values[variable])
+        for val in column_values[variable]:
             squared_diffs.append((var_mean - val) ** 2)
+
         var_std_map[variable] = sqrt(sum(squared_diffs) / len(squared_diffs))
         squared_diffs = []
 

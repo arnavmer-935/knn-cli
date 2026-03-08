@@ -2,7 +2,7 @@ import typer
 from typing import Annotated
 
 from knn_cli.data_loader import load_dataset
-from knn_cli.data_utils import get_categories, Distances, validate_args
+from knn_cli.data_utils import Distances, get_column_values, validate_prediction_args, validate_dataset_args
 from knn_cli.knn import calculate_distances, get_classification, k_nearest_points
 from knn_cli.visualization import generate_plots
 from knn_cli.statistics import (mean_dataset, median_dataset, count_min_max, quartile_values_dataset, standard_deviation_dataset,
@@ -39,19 +39,19 @@ def main(
     :return: None
     """
     try:
-        validate_args(dataset, k, query_data, x, y, z)
-
+        validate_prediction_args(dataset, k, query_data)
         user_datapoints, feature_map = load_dataset(dataset)
+        validate_dataset_args(user_datapoints, feature_map, k, query_data, x, y, z)
 
-        categories = get_categories(dataset)
+        categories = {pt.category for pt in user_datapoints}
 
-        print("KNN Classifier!")
+        print("-----------KNN Classifier CLI Tool-----------")
         print("Training data:", dataset)
 
         print("Number of features:", len(feature_map))
         print("Categories:")
 
-        for cat in categories[:-1]:
+        for cat in categories:
             print("\t" + cat[0].upper() + cat[1:].lower())
 
         query_point = [float(x) for x in query_data.strip().split()]
@@ -64,21 +64,22 @@ def main(
         distances = calculate_distances(query_point, user_datapoints, distance)
         k_nearest_dists = k_nearest_points(k, distances)
         query_data_prediction = get_classification(k_nearest_dists)
-
         print("Prediction:", query_data_prediction)
 
         if describe:
-            mean_of_data = mean_dataset(dataset)
-            median_of_data = median_dataset(dataset)
-            data_count, data_min, data_max = count_min_max(dataset)
-            q1, q3 = quartile_values_dataset(dataset)
-            st_devs = standard_deviation_dataset(dataset)
+            column_values = get_column_values(user_datapoints, feature_map)
+            mean_of_data = mean_dataset(column_values)
+            median_of_data = median_dataset(column_values)
 
-            generate_desc_statistics(describe, mean_of_data, data_count, data_min, data_max, q1, median_of_data, q3,
+            data_count, data_min, data_max = count_min_max(column_values)
+            q1, q3 = quartile_values_dataset(column_values)
+            st_devs = standard_deviation_dataset(column_values)
+
+            generate_desc_statistics(mean_of_data, data_count, data_min, data_max, q1, median_of_data, q3,
                                      st_devs)
 
         if plot:
-            generate_plots(dataset, k, query_data, x, y, z)
+            generate_plots(user_datapoints, feature_map, k, query_data, x, y, z)
 
     except ValueError as e:
         print(e)

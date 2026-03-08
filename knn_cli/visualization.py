@@ -8,9 +8,8 @@ color_palette = ["red","blue","green","orange","purple","brown","pink","gray","o
                  "teal","navy","coral","lime","indigo","turquoise","maroon","darkgreen","darkblue","darkorange",
                  "slateblue","crimson","peru","orchid","dodgerblue","forestgreen","darkviolet","chocolate"]
 
-def generate_plots(dataset, k, query_data, x: str, y, z):
+def generate_plots(datapoints, feature_map, k, query_data, x, y, z):
 
-    datapoints, feature_map = load_dataset(dataset)
     if x in feature_map and y in feature_map:
         groups = {}
         x_index = feature_map[x]
