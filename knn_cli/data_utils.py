@@ -69,9 +69,9 @@ def validate_prediction_args(dataset: str, k: int, query_data):
         except ValueError:
             raise ValueError("Query datapoint contains non-numerical data.")
 
-def validate_dataset_args(datapoints, feature_map, k, query_data, x, y, z):
+def validate_dataset_args(datapoints, feature_map, k, query_data, plot, x, y, z):
     if k > len(datapoints):
-        raise ValueError("Value of k cannot exceed the size of dataset.")
+        raise ValueError(f"Value of k ({k}) cannot exceed the size of dataset ({len(datapoints)}).")
 
     if feature_map is None:
         raise ValueError("Dataset is empty or malformed.")
@@ -83,14 +83,15 @@ def validate_dataset_args(datapoints, feature_map, k, query_data, x, y, z):
     if len(query_pt) != len(feature_map):
         raise ValueError("Number of feature columns in dataset does not match the dimensions of query point.")
 
-    if x is not None:
-        if x not in feature_map:
-            raise ValueError(f"Feature column {x} does not exist in dataset.")
+    if not plot and any(axis is not None for axis in (x, y, z)):
+        raise ValueError("Axis arguments (--x, --y, --z) require the --plot flag.")
 
-    if y is not None:
-        if y not in feature_map:
-            raise ValueError(f"Feature column {y} does not exist in dataset.")
+    if z is not None and y is None:
+        raise ValueError("z-axis requires a y-axis feature.")
 
-    if z is not None:
-        if z not in feature_map:
-            raise ValueError(f"Feature column {z} does not exist in dataset.")
+    if y is not None and x is None:
+        raise ValueError("y-axis requires an x-axis feature.")
+
+    for axis, feature in {"x": x, "y": y, "z": z}.items():
+        if feature is not None and feature not in feature_map:
+            raise ValueError(f"{axis}-axis feature \"{feature}\" does not exist in dataset.")

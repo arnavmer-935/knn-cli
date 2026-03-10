@@ -21,8 +21,8 @@ def load_dataset(dataset: str):
                     continue
 
                 values = list(row.values())
-                feature_vals = [float(val) for val in values[:-1]]
-                category = values[-1]
+                feature_vals = [float(val.strip()) for val in values[:-1]]
+                category = values[-1].strip()
                 datapoint = Datapoint(tuple(feature_vals), category)
                 datapoints.append(datapoint)
 

@@ -79,10 +79,10 @@ def main(
 
         validate_prediction_args(dataset, k, query_data)
         user_datapoints, feature_map = load_dataset(dataset)
-        validate_dataset_args(user_datapoints, feature_map, k, query_data, x, y, z)
+        validate_dataset_args(user_datapoints, feature_map, k, query_data, plot, x, y, z)
 
         categories = sorted({pt.category for pt in user_datapoints})
-        query_point = [float(x) for x in query_data.strip().split()]
+        query_point = [float(x.strip()) for x in query_data.strip().split()]
 
         distances = calculate_distances(query_point, user_datapoints, distance)
         k_nearest_dists = k_nearest_points(k, distances)

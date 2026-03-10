@@ -1,6 +1,5 @@
 from math import sqrt
 
-from rich.align import Align
 from rich.console import Console
 from rich.table import Table
 from knn_cli.data_utils import median
