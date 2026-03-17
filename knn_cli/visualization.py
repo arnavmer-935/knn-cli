@@ -5,7 +5,7 @@ color_palette = ["red","blue","green","orange","purple","brown","pink","gray","o
                  "teal","navy","coral","lime","indigo","turquoise","maroon","darkgreen","darkblue","darkorange",
                  "slateblue","crimson","peru","dodgerblue","forestgreen","darkviolet","chocolate"]
 
-def generate_plots(datapoints, feature_map, k, query_pt, x, y, z):
+def generate_plots(datapoints, feature_map, k, query_data, x, y, z):
 
     if x in feature_map and y in feature_map:
         groups = {}
@@ -14,7 +14,7 @@ def generate_plots(datapoints, feature_map, k, query_pt, x, y, z):
 
         z_index = feature_map[z] if z in feature_map else None
 
-        query_data = [float(x) for x in query_pt.strip().split()]
+        #TODO: takes already valid query point
 
         for point in datapoints:
             if point.category not in groups:

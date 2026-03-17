@@ -6,13 +6,14 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from knn_cli.data_loader import load_dataset
-from knn_cli.data_utils import Distances, get_column_values, validate_prediction_args, validate_dataset_args
+from knn_cli.data_utils import Distances, get_column_values, validate_prediction_args, validate_dataset_args, \
+    get_valid_query_point
 from knn_cli.knn import calculate_distances, get_classification, k_nearest_points
 from knn_cli.visualization import generate_plots
 from knn_cli.statistics import (mean_dataset, median_dataset, count_min_max, quartile_values_dataset, standard_deviation_dataset,
                          generate_desc_statistics)
 
-def display_config(dataset, k, query_pt, distance, describe, plot, x, y, z):
+def display_config(dataset, k, query_pt: list[float], distance, describe, plot, x, y, z):
 
     cli_console = Console()
     config_table = Table()
@@ -22,11 +23,10 @@ def display_config(dataset, k, query_pt, distance, describe, plot, x, y, z):
     x = "N/A" if x is None else x
     y = "N/A" if y is None else y
     z = "N/A" if z is None else z
-    query_data = [float(x) for x in query_pt.strip().split()]
 
     config_table.add_row("Dataset", dataset)
     config_table.add_row("k", str(k))
-    config_table.add_row("Query Datapoint", str(query_data))
+    config_table.add_row("Query Datapoint", str(query_pt))
     config_table.add_row("Distance Metric", distance.value)
     config_table.add_row("Enable Descriptive Statistics?", str(describe))
     config_table.add_row("Enable Plotting?", str(plot))
@@ -70,19 +70,19 @@ def main(
     """
     console = Console()
     try:
-        if confirm:
-            console.rule("[bold cyan] Configuration Attributes")
-            display_config(dataset, k, query_data, distance, describe, plot, x, y, z)
-
-            if not typer.confirm("Proceed?"):
-                raise typer.Exit()
-
-        validate_prediction_args(dataset, k, query_data)
+        validate_prediction_args(dataset, k)
+        query_point = get_valid_query_point(query_data)
         user_datapoints, feature_map = load_dataset(dataset)
         validate_dataset_args(user_datapoints, feature_map, k, query_data, plot, x, y, z)
 
         categories = sorted({pt.category for pt in user_datapoints})
-        query_point = [float(x.strip()) for x in query_data.strip().split()]
+
+        if confirm:
+            console.rule("[bold cyan] Configuration Attributes")
+            display_config(dataset, k, query_point, distance, describe, plot, x, y, z)
+
+            if not typer.confirm("Proceed?"):
+                raise typer.Exit()
 
         distances = calculate_distances(query_point, user_datapoints, distance)
         k_nearest_dists = k_nearest_points(k, distances)
@@ -124,7 +124,7 @@ def main(
                                      st_devs)
 
         if plot:
-            generate_plots(user_datapoints, feature_map, k, query_data, x, y, z)
+            generate_plots(user_datapoints, feature_map, k, query_point, x, y, z)
 
     except ValueError as e:
         print(e)

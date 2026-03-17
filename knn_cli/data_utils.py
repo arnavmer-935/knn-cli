@@ -1,6 +1,7 @@
 import os.path
 from dataclasses import dataclass
 from enum import Enum
+from re import split
 
 @dataclass
 class Datapoint:
@@ -52,22 +53,12 @@ def get_categories(dataset):
         return ls
 
 
-def validate_prediction_args(dataset: str, k: int, query_data):
+def validate_prediction_args(dataset: str, k: int):
     if not os.path.isfile(dataset):
         raise ValueError(f"Dataset file: {dataset} is invalid.")
 
     if k <= 0:
         raise ValueError("The value of k must be positive.")
-
-    query_pt = query_data.strip().split(" ")
-    if not query_pt:
-        raise ValueError("Query datapoint is empty.")
-
-    for val in query_pt:
-        try:
-            numeric = float(val)
-        except ValueError:
-            raise ValueError("Query datapoint contains non-numerical data.")
 
 def validate_dataset_args(datapoints, feature_map, k, query_data, plot, x, y, z):
     if k > len(datapoints):
@@ -79,8 +70,7 @@ def validate_dataset_args(datapoints, feature_map, k, query_data, plot, x, y, z)
     if len(feature_map) <= 2:
         raise ValueError("Insufficient columns in dataset file. Expected at least 3 columns.")
 
-    query_pt = query_data.strip().split()
-    if len(query_pt) != len(feature_map):
+    if len(get_valid_query_point(query_data)) != len(feature_map):
         raise ValueError("Number of feature columns in dataset does not match the dimensions of query point.")
 
     if not plot and any(axis is not None for axis in (x, y, z)):
@@ -95,3 +85,18 @@ def validate_dataset_args(datapoints, feature_map, k, query_data, plot, x, y, z)
     for axis, feature in {"x": x, "y": y, "z": z}.items():
         if feature is not None and feature not in feature_map:
             raise ValueError(f"{axis}-axis feature \"{feature}\" does not exist in dataset.")
+
+def get_valid_query_point(query_point: str):
+    values = split(r'\s+', query_point)
+    result = []
+    if not values:
+        raise ValueError("Query datapoint is empty.")
+
+    for val in values:
+        try:
+            numeric = float(val)
+            result.append(numeric)
+        except ValueError:
+            raise ValueError("Query datapoint contains non-numerical data.")
+
+    return result
