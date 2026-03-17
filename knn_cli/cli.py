@@ -13,6 +13,8 @@ from knn_cli.visualization import generate_plots
 from knn_cli.statistics import (mean_dataset, median_dataset, count_min_max, quartile_values_dataset, standard_deviation_dataset,
                          generate_desc_statistics)
 
+#TODO: add and edit docs
+
 def display_config(dataset, k, query_pt: list[float], distance, describe, plot, x, y, z):
 
     cli_console = Console()

@@ -3,10 +3,11 @@ import csv
 
 def load_dataset(dataset: str):
     """
-    Takes a csv file path, processes it and returns a list of datapoint objects.
-    Also handles FileNotFound exceptions
+    Parses and processes an existent CSV file containing numeric values.
     :param dataset: the file path of data
-    :return: list of datapoint objects
+
+    :return: a tuple containing a list of datapoint objects and a dictionary which maps each column name to a 0-based
+    index. Used for quickly accessing feature values associated with the given column name.
     """
     datapoints = []
     feature_index_map = dict()

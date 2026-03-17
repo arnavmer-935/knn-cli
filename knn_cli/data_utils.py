@@ -3,6 +3,9 @@ from dataclasses import dataclass
 from enum import Enum
 from re import split
 
+
+#TODO: write and edit docs
+
 @dataclass
 class Datapoint:
     features: tuple[float,...]

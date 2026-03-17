@@ -1,12 +1,29 @@
 from math import sqrt
-
 from rich.console import Console
 from rich.table import Table
 from knn_cli.data_utils import median
 
-#TODO: rewrite documentation
-
 def generate_desc_statistics(mean_of_data, ct, min_v, max_v, q1, medians, q3, std):
+    """
+    The method responsible for generating a table containing descriptive statistics about the dataset.
+    It produces the counts, mean, min and max values, quartile values,
+    and standard deviation for each independent variable's column. 
+    The table does not contain the categorical values (dependent variable) when 
+    descriptive statistics are being reported.
+     
+    :param mean_of_data: A dictionary where the key is the column name, 
+    and the value is the average of that column's values
+    
+    :param ct: The count (number of data values) for each column in the dataset.
+    :param min_v: A dictionary which maps a column name to its minimum value. 
+    :param max_v: A dictionary which maps a column name to its maximum value.
+    :param q1: A dictionary which maps a column name to the value at its 25th percentile.
+    :param medians: A dictionary which maps a column name to its median value (50th percentile).
+    :param q3: A dictionary which maps a column name to the value at its 75th percentile.
+    :param std: A dictionary which maps a column name to the value of its standard deviation.
+    
+    :return: None
+    """
     console = Console()
     stats_table = Table("Feature", "Count", "Min", "Max", "25%", "50%", "75%",
                         "Mean", "Std\nDev", title_justify="center")
@@ -28,8 +45,8 @@ def generate_desc_statistics(mean_of_data, ct, min_v, max_v, q1, medians, q3, st
 def mean_dataset(column_values):
     """
     Calculates the average values of each independent variable.
-    :param dataset: file path of data
-    :return: dictionary whose key is the variable name and value is its average
+    :param column_values: a dictionary which maps each column name to a list of its dataset values.
+    :return: dictionary that maps the column name to its average value.
     """
     var_mean_map ={}
     for key in column_values:
@@ -40,8 +57,8 @@ def mean_dataset(column_values):
 def median_dataset(column_values):
     """
     Calculates the median value (50th percentile) of each independent variable
-    :param dataset: rfile path of the data
-    :return: dictionary whose key is the variable name and the value is its median
+    :param column_values: a dictionary which maps each column name to a list of its dataset values.
+    :return: dictionary that maps the column name to its median value.
     """
     var_median_map = {}
     for key in column_values:
@@ -57,9 +74,10 @@ def median_dataset(column_values):
 def quartile_values_dataset(column_values):
     """
     Calculates the 25th percentile and 75th percentile values for each independent variable.
-    :param dataset: file path for data
-    :return: a tuple of 2 dictionaries - both have their keys as the variable name, but the value for one is the 25th percentile
-    and the other's value is its 75th percentile
+    :param column_values: a dictionary which maps each column name to a list of its dataset values.
+    :return: tuple of two dictionaries with the following structure:
+    a map of column name and 25th percentile values,
+    and a map of column name and 75th percentile values.
     """
     var_q1_map = {}
     var_q3_map = {}
@@ -74,9 +92,9 @@ def quartile_values_dataset(column_values):
 def count_min_max(column_values):
     """
     Calculates the count, minimum value and maximum value of each independent variable.
-    :param dataset: file path for data
-    :return: tuple containing count, dict whose key is variable name and value is its min,
-    dict whose key is variable name and value is its max
+    :param column_values: a dictionary which maps each column name to a list of its dataset values.
+    :return: tuple containing count, dictionary that maps column name to is its min value, and
+    a dictionary that maps column name to its max value.
     """
 
     count = len(next(iter(column_values.values())))
@@ -89,9 +107,9 @@ def count_min_max(column_values):
 
 def standard_deviation_dataset(column_values):
     """
-    Calculates the standard deviation about the mean for each independent variable
-    :param dataset: file path for data
-    :return: dictionary whose key is the variable name and value is its standard deviation about the mean
+    Calculates the standard deviation about the mean for each independent variable.
+    :param column_values: a dictionary which maps each column name to a list of its dataset values.
+    :return: dictionary that maps column names to their standard deviation values.
     """
     squared_diffs = []
     var_std_map = {}
