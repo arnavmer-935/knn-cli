@@ -1,13 +1,16 @@
 from knn_cli.data_utils import Datapoint
 import csv
 
-def load_dataset(dataset: str):
+def load_dataset(dataset: str) -> tuple[list[Datapoint], dict[str, int]]:
     """
-    Parses and processes an existent CSV file containing numeric values.
-    :param dataset: the file path of data
+    Parses an existing CSV file containing numeric feature values and a categorical label column.
+    Assumes that the last column is the category and all preceding columns are numeric features.
+    If the file is not found, prints an error message and returns empty results silently.
 
-    :return: a tuple containing a list of datapoint objects and a dictionary which maps each column name to a 0-based
-    index. Used for quickly accessing feature values associated with the given column name.
+    :param dataset: file path of the training dataset.
+
+    :return: a tuple containing a list of Datapoint objects and a dictionary mapping
+    each feature column name to its 0-based index.
     """
     datapoints = []
     feature_index_map = dict()

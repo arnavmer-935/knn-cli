@@ -1,14 +1,32 @@
 from random import choice
 from matplotlib import pyplot as plt
+from data_utils import Datapoint
 
-color_palette = ["red","blue","green","orange","purple","brown","pink","gray","olive","cyan","magenta",
+COLOR_PALETTE = ["red","blue","green","orange","purple","brown","pink","gray","olive","cyan","magenta",
                  "teal","navy","coral","lime","indigo","turquoise","maroon","darkgreen","darkblue","darkorange",
                  "slateblue","crimson","peru","dodgerblue","forestgreen","darkviolet","chocolate"]
 
-#TODO: Write docs
+def generate_plots(datapoints: list[Datapoint], feature_map: dict[str, int], k: int,
+                   query_data: list[float], x: str, y: str, z: str) -> None:
+    """
+    Generates a 2D or 3D scatter plot of the dataset, color-coded by category,
+    with the query point highlighted as a star marker.
 
-def generate_plots(datapoints, feature_map, k, query_data, x, y, z):
+    A 3D plot is produced when a z-axis feature is provided, otherwise a 2D plot
+    is generated. Each category is assigned a distinct color, and the query point
+    is always rendered in yellow for visibility.
 
+    :param datapoints: list of Datapoint objects representing the training data.
+    :param feature_map: dictionary mapping each feature name to its 0-based index.
+    :param k: number of nearest neighbors used in classification. Displayed in the plot title.
+    :param query_data: the parsed query point as a list of floats.
+    :param x: feature name to plot on the x-axis.
+    :param y: feature name to plot on the y-axis.
+    :param z: optional feature name to plot on the z-axis. If provided, a 3D plot
+    is generated. If None, a 2D plot is generated instead.
+
+    :return: None
+    """
     if x in feature_map and y in feature_map:
         groups = {}
         x_index = feature_map[x]
@@ -45,7 +63,7 @@ def generate_plots(datapoints, feature_map, k, query_data, x, y, z):
 
         legend = map_colors_to_categories(groups)
 
-        for category_color, category in legend.items(): #key: color, value: category
+        for category_color, category in legend.items():
             plot_points = groups[category]
 
             x_points = [p[0] for p in plot_points]
@@ -79,14 +97,21 @@ def generate_plots(datapoints, feature_map, k, query_data, x, y, z):
 
         plt.show()
 
-def map_colors_to_categories(groups):
+def map_colors_to_categories(groups: dict[str, list[tuple[float, float, float]]]) -> dict[str, str]:
+    """
+    Assigns a unique color to each category in the dataset for use in scatter plots.
+    Colors are randomly sampled without replacement from the predefined COLOR_PALETTE.
+
+    :param groups: dictionary mapping each category name to its list of coordinate tuples.
+    :return: dictionary mapping each assigned color to its corresponding category name.
+    """
     used_colors = set()
     colors = []
 
     for _ in range(len(groups)):
-        chosen = choice(color_palette)
+        chosen = choice(COLOR_PALETTE)
         while chosen in used_colors:
-            chosen = choice(color_palette)
+            chosen = choice(COLOR_PALETTE)
 
         colors.append(chosen)
         used_colors.add(chosen)

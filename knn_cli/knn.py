@@ -2,18 +2,21 @@ from knn_cli.data_utils import Datapoint
 from knn_cli.distance_metric import euclidean, manhattan, cosine
 from collections import Counter
 
-def calculate_distances(feature: list[float], datapoints: list[Datapoint], distance: str = "eucl"):
+def calculate_distances(feature: list[float], datapoints: list[Datapoint],
+                        distance: str = "eucl") -> list[tuple[float, Datapoint]]:
     """
-    Takes the query data given by the user and calculates its distances from the other datapoints. Distance metric
-    is also chosen by the user, but the default value is Euclidean distance.
-    Returns a dictionary whose key is the datapoint in the training data, and the value is the distance between that
-    training datapoint and query datapoint.
+    Calculates the distance between the query point and every datapoint in the
+    training set using the specified distance metric.
 
-    :param feature: the parsed and validated query point.
-    :param datapoints: list of Datapoint objects.
-    :param distance: the distance metric chosen by the user.
-    :return: list of tuples where the first tuple element is the distance from query point,
-     and second tuple element is the Datapoint itself.
+    Defaults to Euclidean distance if an unrecognized metric string is provided.
+
+    :param feature: the parsed query point as a list of floats.
+    :param datapoints: list of Datapoint objects representing the training data.
+    :param distance: the distance metric to use. Accepts 'eucl', 'manh', or 'cos'.
+    Defaults to 'eucl'.
+
+    :return: list of tuples where each tuple contains the distance from the query
+    point as a float and the corresponding Datapoint object.
     """
     if distance == "manh":
         metric = manhattan
@@ -32,23 +35,28 @@ def calculate_distances(feature: list[float], datapoints: list[Datapoint], dista
 
 def k_nearest_points(k: int, distances: list[tuple[float, Datapoint]]) -> list[Datapoint]:
     """
-    Finds the k smallest distances from the array of all distances.
-    Returns a sub-array containing the smallest distance.
+    Selects the k closest datapoints from the precomputed distances list.
 
-    :param k: number of neighbors with which the comparison has to be made.
-    :param distances: an array containing the distances between the query data and the training data points
-    :return: a sub-array pof distances which has the k smallest distances
+    :param k: number of nearest neighbors to select.
+    :param distances: list of tuples where each tuple contains a distance float
+    and its corresponding Datapoint object.
+
+    :return: list of the k nearest Datapoint objects, ordered closest first.
     """
     sorted_distances = sorted(distances, key = lambda x: x[0])
     k_nearest = sorted_distances[:k]
     return [x[1] for x in k_nearest]
 
-def get_classification(nearest_neighbors: list[Datapoint]):
+def get_classification(nearest_neighbors: list[Datapoint]) -> str:
     """
-    Uses frequency-based majority voting to obtain a classification for the query data point.
+    Determines the predicted class of the query point using frequency-based
+    majority voting across the k nearest neighbors.
 
-    :param nearest_neighbors: the list of k nearest Datapoint objects.
-    :return: the prediction of the query datapoint based on the KNN algorithm.
+    In the case of a tie, the first encountered class in the neighbors list wins,
+    making the result deterministic.
+
+    :param nearest_neighbors: list of the k nearest Datapoint objects.
+    :return: the predicted category label as a string.
     """
     categories = [c.category for c in nearest_neighbors]
     counter = Counter(categories)

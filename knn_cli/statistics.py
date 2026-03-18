@@ -3,7 +3,11 @@ from rich.console import Console
 from rich.table import Table
 from knn_cli.data_utils import median
 
-def generate_desc_statistics(mean_of_data, ct, min_v, max_v, q1, medians, q3, std):
+def generate_desc_statistics(mean_of_data: dict[str, float],
+                             ct: float, min_v: dict[str, float],
+                             max_v: dict[str, float], q1: dict[str, float],
+                             medians: dict[str, float], q3: dict[str, float],
+                             std: dict[str, float]) -> None:
     """
     The method responsible for generating a table containing descriptive statistics about the dataset.
     It produces the counts, mean, min and max values, quartile values,
@@ -42,7 +46,7 @@ def generate_desc_statistics(mean_of_data, ct, min_v, max_v, q1, medians, q3, st
 
     console.print(stats_table, justify="center")
 
-def mean_dataset(column_values):
+def mean_dataset(column_values: dict[str, list[float]]) -> dict[str, float]:
     """
     Calculates the average values of each independent variable.
     :param column_values: a dictionary which maps each column name to a list of its dataset values.
@@ -54,7 +58,7 @@ def mean_dataset(column_values):
 
     return var_mean_map
 
-def median_dataset(column_values):
+def median_dataset(column_values: dict[str, list[float]]) -> dict[str, float]:
     """
     Calculates the median value (50th percentile) of each independent variable
     :param column_values: a dictionary which maps each column name to a list of its dataset values.
@@ -71,7 +75,7 @@ def median_dataset(column_values):
 
     return var_median_map
 
-def quartile_values_dataset(column_values):
+def quartile_values_dataset(column_values: dict[str, list[float]]) -> tuple[dict[str, float], dict[str, float]]:
     """
     Calculates the 25th percentile and 75th percentile values for each independent variable.
     :param column_values: a dictionary which maps each column name to a list of its dataset values.
@@ -89,7 +93,7 @@ def quartile_values_dataset(column_values):
 
     return var_q1_map, var_q3_map
 
-def count_min_max(column_values):
+def count_min_max(column_values: dict[str, list[float]]) -> tuple[float, dict[str, float], dict[str, float]]:
     """
     Calculates the count, minimum value and maximum value of each independent variable.
     :param column_values: a dictionary which maps each column name to a list of its dataset values.
@@ -105,7 +109,7 @@ def count_min_max(column_values):
         max_map[var] = max(column_values[var])
     return count, min_map, max_map
 
-def standard_deviation_dataset(column_values):
+def standard_deviation_dataset(column_values: dict[str, list[float]]) -> dict[str, float]:
     """
     Calculates the standard deviation about the mean for each independent variable.
     :param column_values: a dictionary which maps each column name to a list of its dataset values.

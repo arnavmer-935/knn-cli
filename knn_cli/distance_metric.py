@@ -1,6 +1,16 @@
 from math import sqrt
 
 def euclidean(p: list[float], q: list[float]) -> float:
+    """
+    Calculates the Euclidean (straight-line) distance between two vectors.
+
+    Raises ValueError if the vectors have different lengths or are empty.
+
+    :param p: first vector as a list of floats.
+    :param q: second vector as a list of floats.
+
+    :return: Euclidean distance between p and q.
+    """
     if len(p) != len(q):
         raise ValueError("Vectors must have equal lengths.")
 
@@ -14,6 +24,16 @@ def euclidean(p: list[float], q: list[float]) -> float:
     return sqrt(distance_squared)
 
 def manhattan(p: list[float], q: list[float]) -> float:
+    """
+    Calculates the Manhattan (city block) distance between two vectors.
+
+    Raises ValueError if the vectors have different lengths or are empty.
+
+    :param p: first vector as a list of floats.
+    :param q: second vector as a list of floats.
+
+    :return: Manhattan distance between p and q.
+    """
     if len(p) != len(q):
         raise ValueError("Vectors must have equal lengths.")
 
@@ -27,6 +47,19 @@ def manhattan(p: list[float], q: list[float]) -> float:
     return m_distance
 
 def cosine(p: list[float], q: list[float]) -> float:
+    """
+    Calculates the cosine distance between two vectors, defined as 1 minus
+    the cosine similarity. A value of 0 means the vectors point in the same
+    direction, and 2 means they point in opposite directions.
+
+    Raises ValueError if the vectors have different lengths, are empty,
+    or if either vector is a zero vector.
+
+    :param p: first vector as a list of floats.
+    :param q: second vector as a list of floats.
+
+    :return: cosine distance between p and q in the range [0, 2].
+    """
     if len(p) != len(q):
         raise ValueError("Vectors must have equal lengths.")
 

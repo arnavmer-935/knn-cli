@@ -5,23 +5,51 @@ from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
 from knn_cli.data_loader import load_dataset
-from knn_cli.data_utils import Distances, get_column_values, validate_prediction_args, validate_dataset_args, \
-    get_valid_query_point
 from knn_cli.knn import calculate_distances, get_classification, k_nearest_points
 from knn_cli.visualization import generate_plots
-from knn_cli.statistics import (mean_dataset, median_dataset, count_min_max, quartile_values_dataset, standard_deviation_dataset,
-                         generate_desc_statistics)
 
-#TODO: add and edit docs
+from knn_cli.data_utils import (Distances,
+                                get_column_values,
+                                validate_prediction_args,
+                                validate_dataset_args,
+                                get_valid_query_point
+                                )
+
+from knn_cli.statistics import (mean_dataset,
+                                median_dataset,
+                                count_min_max,
+                                quartile_values_dataset,
+                                standard_deviation_dataset,
+                                generate_desc_statistics
+                                )
+
 DISTANCE_LABEL = {
     Distances.eucl: "Euclidean",
     Distances.manh: "Manhattan",
     Distances.cos: "Cosine Similarity"
 }
 
-def display_config(dataset, k, query_pt: list[float], distance, describe, plot, x, y, z):
+def display_config(dataset: str, k: int, query_pt: list[float], distance: Distances, describe: bool,
+                   plot: bool, x: str, y: str, z: str) -> None:
+    """
+    Displays a formatted table summarizing the user's configuration before execution.
+    Called only when the --confirm flag is set, giving the user a chance to review
+    all arguments prior to running the classification algorithm.
 
+    :param dataset: file path of the training dataset.
+    :param k: number of nearest neighbors to be considered.
+    :param query_pt: the parsed query point as a list of floats.
+    :param distance: the selected Distances enum member representing the distance metric.
+    :param describe: boolean flag indicating whether descriptive statistics will be displayed.
+    :param plot: boolean flag indicating whether plotting mode is enabled.
+    :param x: feature name assigned to the x-axis, or None if not specified.
+    :param y: feature name assigned to the y-axis, or None if not specified.
+    :param z: feature name assigned to the z-axis, or None if not specified.
+
+    :return: None
+    """
     cli_console = Console()
     config_table = Table()
     config_table.add_column("Attribute")
@@ -54,25 +82,28 @@ def main(
     y: Annotated[str, typer.Option(help="label for the y axis")] = None,
     z: Annotated[str, typer.Option(help="label for the z axis (used only in 3D plots")] = None,
     confirm: Annotated[bool, typer.Option("--confirm", help="confirm arguments before running")] = False
-):
+) -> None:
 
     """
-    The main function of the program responsible for setting up the CLI, parsing command line arguments, classifying
-    query data based on the KNN algorithm, providing descriptive statistics about the data, and generating plots to
-    visualize the data.
-    Also handles the following issues:
-    - FileNotFound Errors
-    - Missing x or y values when plot mode is enabled
-    :param confirm:
-    :param dataset: the file path of data
-    :param k: the amount of nearest neighbors required for comparison
-    :param query_data: the datapoint whose classification is to be made
-    :param distance: the distance metric
-    :param describe: flag for choosing whether descriptive statistics for data are needed
-    :param plot: flag for choosing whether plots for the data are needed
-    :param x: the value which is to be plotted on the x-axis (if plot is enabled)
-    :param y: the value which is to be plotted on the y-axis (if plot is enabled)
-    :param z: optional value which is to be plotted on the z axis (3D plot is made if z is given, 2D is generated otherwise)
+    The main entry point of the CLI. Responsible for parsing command line arguments,
+    validating inputs, classifying the query point using the KNN algorithm, and
+    optionally displaying descriptive statistics and scatter plots.
+
+    Catches and reports ValueError for all invalid argument combinations, including
+    invalid file paths, out-of-range k values, query point dimension mismatches,
+    and malformed plot configurations. Exits with code 1 on any validation failure.
+
+    :param dataset: file path of the training dataset.
+    :param k: number of nearest neighbors to be considered.
+    :param query_data: whitespace-separated feature values of the query point.
+    :param distance: the distance metric to use. Accepts eucl, manh, or cos. Defaults to eucl.
+    :param describe: if True, displays a descriptive statistics table for the dataset.
+    :param plot: if True, enables scatter plot generation.
+    :param x: feature name to plot on the x-axis. Requires --plot.
+    :param y: feature name to plot on the y-axis. Requires --x.
+    :param z: feature name to plot on the z-axis. Produces a 3D plot. Requires --y.
+    :param confirm: if True, displays a configuration summary and prompts the user to proceed.
+
     :return: None
     """
     console = Console()
