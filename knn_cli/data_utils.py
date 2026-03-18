@@ -12,9 +12,9 @@ class Datapoint:
     category: str
 
 class Distances(str, Enum):
-    eucl = "Euclidean"
-    manh = "Manhattan"
-    cos = "Cosine Similarity"
+    eucl = "eucl"
+    manh = "manh"
+    cos = "cos"
 
 def get_column_values(datapoints, feature_map):
     """
@@ -90,7 +90,7 @@ def validate_dataset_args(datapoints, feature_map, k, query_data, plot, x, y, z)
             raise ValueError(f"{axis}-axis feature \"{feature}\" does not exist in dataset.")
 
 def get_valid_query_point(query_point: str):
-    values = split(r'\s+', query_point)
+    values = split(r'\s+', query_point.strip())
     result = []
     if not values:
         raise ValueError("Query datapoint is empty.")

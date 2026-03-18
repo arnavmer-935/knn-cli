@@ -14,6 +14,11 @@ from knn_cli.statistics import (mean_dataset, median_dataset, count_min_max, qua
                          generate_desc_statistics)
 
 #TODO: add and edit docs
+DISTANCE_LABEL = {
+    Distances.eucl: "Euclidean",
+    Distances.manh: "Manhattan",
+    Distances.cos: "Cosine Similarity"
+}
 
 def display_config(dataset, k, query_pt: list[float], distance, describe, plot, x, y, z):
 
@@ -29,7 +34,7 @@ def display_config(dataset, k, query_pt: list[float], distance, describe, plot, 
     config_table.add_row("Dataset", dataset)
     config_table.add_row("k", str(k))
     config_table.add_row("Query Datapoint", str(query_pt))
-    config_table.add_row("Distance Metric", distance.value)
+    config_table.add_row("Distance Metric", DISTANCE_LABEL[distance.value])
     config_table.add_row("Enable Descriptive Statistics?", str(describe))
     config_table.add_row("Enable Plotting?", str(plot))
     config_table.add_row("Plot Label for x-axis", x)
