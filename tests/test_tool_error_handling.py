@@ -55,3 +55,6 @@ class TestCLIErrorCases(unittest.TestCase):
             app, [IRIS, "5", "--p", IRIS_QUERY, "--plot", "--x", "nonexistent_col"]
         )
         self.assertEqual(result.exit_code, 1)
+
+if __name__ == "__main__":
+    unittest.main()

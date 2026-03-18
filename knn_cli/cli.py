@@ -143,7 +143,7 @@ def main(
         normalized_values = None
         normalized_pt = None
 
-        if not normalize:
+        if normalize is None:
             distances = calculate_distances(query_point, user_datapoints, distance)
             k_nearest_dists = k_nearest_points(k, distances)
             query_data_prediction = get_classification(k_nearest_dists)

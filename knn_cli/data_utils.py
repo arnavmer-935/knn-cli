@@ -85,9 +85,7 @@ def validate_prediction_args(dataset: str, k: int, normalize: str) -> None:
     if k <= 0:
         raise ValueError("The value of k must be positive.")
 
-    feature_norm = normalize.strip().lower()
-
-    if not feature_norm or feature_norm not in {"zscore", "minmax"}:
+    if normalize is not None and not any(normalize == method for method in NormalizationMethods):
         raise ValueError("Invalid normalization method. Expected 'zscore' or 'minmax'.")
 
 def validate_dataset_args(datapoints: list[Datapoint], feature_map: dict[str, int],
@@ -149,6 +147,9 @@ def get_valid_query_point(query_point: str) -> list[float]:
 
     :return: list of parsed float values representing the query point's features.
     """
+    if query_point is None or not query_point:
+        raise ValueError("Query point is not defined.")
+
     values = split(r'\s+', query_point.strip())
     result = []
     if not values:

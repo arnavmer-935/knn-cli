@@ -18,6 +18,8 @@ class TestCLIValidRuns(unittest.TestCase):
 
     def test_basic_prediction_exits_successfully(self):
         result = self.runner.invoke(app, [IRIS, "5", "--p", IRIS_QUERY])
+        print(result.output)
+        print(result.exception)
         self.assertEqual(result.exit_code, 0)
 
     def test_prediction_output_is_known_iris_category(self):

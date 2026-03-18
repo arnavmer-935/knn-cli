@@ -1,10 +1,8 @@
-from copy import deepcopy
-
-from knn_cli.data_utils import get_column_values, Datapoint
-
 #TODO: documentation
 # mention that zscore normalization yields zero if std = 0,
 # and that minmax scaling yields zero if column is constant (i.e minimum == maximum)
+
+from knn_cli.data_utils import get_column_values, Datapoint
 
 def get_normalized_datapoints(datapoints, normalized_values, feature_map):
 
