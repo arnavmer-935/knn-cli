@@ -13,6 +13,10 @@ class Distances(str, Enum):
     manh = "manh"
     cos = "cos"
 
+class NormalizationMethods(str, Enum):
+    zscore = "zscore"
+    minmax = "minmax"
+
 def get_column_values(datapoints: list[Datapoint], feature_map: dict[str, int]) -> dict[str, list[float]]:
     """
     Extracts all values for each feature column across the dataset.
@@ -61,15 +65,17 @@ def get_categories(dataset: str) -> list[str]:
         ls = list(set([l.strip().split(",")[-1] for l in f.readlines()]))
         return ls
 
-def validate_prediction_args(dataset: str, k: int) -> None:
+def validate_prediction_args(dataset: str, k: int, normalize: str) -> None:
     """
-    Performs initial validation on the dataset path and k value before the dataset is loaded.
+    Performs initial validation on the dataset path, the k value, and the normalization method
+    before the dataset is loaded.
 
-    Raises ValueError if the dataset path does not point to an existing file,
-    or if k is zero or negative.
+    Raises ValueError if the dataset path does not point to an existing file, if k is zero or negative,
+    or if the normalization method is not "zscore" or "minmax"
 
     :param dataset: file path of the training dataset.
     :param k: number of nearest neighbors to be considered.
+    :param normalize: the method for feature normalization.
 
     :return: None
     """
@@ -78,6 +84,11 @@ def validate_prediction_args(dataset: str, k: int) -> None:
 
     if k <= 0:
         raise ValueError("The value of k must be positive.")
+
+    feature_norm = normalize.strip().lower()
+
+    if not feature_norm or feature_norm not in {"zscore", "minmax"}:
+        raise ValueError("Invalid normalization method. Expected 'zscore' or 'minmax'.")
 
 def validate_dataset_args(datapoints: list[Datapoint], feature_map: dict[str, int],
                           k: int, query_data: str, plot: bool, x: str, y: str, z: str) -> None:

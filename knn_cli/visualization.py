@@ -1,6 +1,6 @@
 from random import choice
 from matplotlib import pyplot as plt
-from data_utils import Datapoint
+from knn_cli.data_utils import Datapoint
 
 COLOR_PALETTE = ["red","blue","green","orange","purple","brown","pink","gray","olive","cyan","magenta",
                  "teal","navy","coral","lime","indigo","turquoise","maroon","darkgreen","darkblue","darkorange",

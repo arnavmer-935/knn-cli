@@ -14,7 +14,7 @@ from knn_cli.data_utils import (Distances,
                                 get_column_values,
                                 validate_prediction_args,
                                 validate_dataset_args,
-                                get_valid_query_point
+                                get_valid_query_point, NormalizationMethods
                                 )
 
 from knn_cli.statistics import (mean_dataset,
@@ -25,14 +25,22 @@ from knn_cli.statistics import (mean_dataset,
                                 generate_desc_statistics
                                 )
 
+from knn_cli.normalization import get_mean_std_map, normalized_values_zscore, get_min_max_map, normalized_values_minmax, \
+    get_normalized_datapoints
+
 DISTANCE_LABEL = {
     Distances.eucl: "Euclidean",
     Distances.manh: "Manhattan",
     Distances.cos: "Cosine Similarity"
 }
 
-def display_config(dataset: str, k: int, query_pt: list[float], distance: Distances, describe: bool,
-                   plot: bool, x: str, y: str, z: str) -> None:
+NORM_LABEL = {
+    NormalizationMethods.zscore: "Z-Score Normalization",
+    NormalizationMethods.minmax: "Min-Max Scaling Normalization"
+}
+
+def display_config(dataset: str, k: int, query_pt: list[float], distance: Distances, normalize: NormalizationMethods,
+                   describe: bool, plot: bool, x: str, y: str, z: str) -> None:
     """
     Displays a formatted table summarizing the user's configuration before execution.
     Called only when the --confirm flag is set, giving the user a chance to review
@@ -42,6 +50,7 @@ def display_config(dataset: str, k: int, query_pt: list[float], distance: Distan
     :param k: number of nearest neighbors to be considered.
     :param query_pt: the parsed query point as a list of floats.
     :param distance: the selected Distances enum member representing the distance metric.
+    :param normalize: #TODO
     :param describe: boolean flag indicating whether descriptive statistics will be displayed.
     :param plot: boolean flag indicating whether plotting mode is enabled.
     :param x: feature name assigned to the x-axis, or None if not specified.
@@ -58,11 +67,13 @@ def display_config(dataset: str, k: int, query_pt: list[float], distance: Distan
     x = "N/A" if x is None else x
     y = "N/A" if y is None else y
     z = "N/A" if z is None else z
+    nm = "N/A" if normalize is None else NORM_LABEL[normalize]
 
     config_table.add_row("Dataset", dataset)
     config_table.add_row("k", str(k))
     config_table.add_row("Query Datapoint", str(query_pt))
-    config_table.add_row("Distance Metric", DISTANCE_LABEL[distance.value])
+    config_table.add_row("Distance Metric", DISTANCE_LABEL[distance])
+    config_table.add_row("Normalization Method", nm)
     config_table.add_row("Enable Descriptive Statistics?", str(describe))
     config_table.add_row("Enable Plotting?", str(plot))
     config_table.add_row("Plot Label for x-axis", x)
@@ -76,6 +87,7 @@ def main(
     k: int = typer.Argument("-k", help="the number of nearest neighbors to be considered."),
     query_data: Annotated[str, typer.Option("--p", help="the query data point's feature values separated by whitespace.")] = None,
     distance: Annotated[Distances, typer.Option("--m", help = "the distance metric", case_sensitive = False)] = Distances.eucl,
+    normalize: Annotated[NormalizationMethods, typer.Option("--normalize", help="normalizes feature values using z-scores/min-max scaling.",)] = None,
     describe: Annotated[bool, typer.Option(help="display in the standard output descriptive statistics of the data")] = False,
     plot: Annotated[bool, typer.Option(help="enables plotting mode")] = False,
     x: Annotated[str, typer.Option(help="label for the x axis")] = None,
@@ -103,12 +115,13 @@ def main(
     :param y: feature name to plot on the y-axis. Requires --x.
     :param z: feature name to plot on the z-axis. Produces a 3D plot. Requires --y.
     :param confirm: if True, displays a configuration summary and prompts the user to proceed.
+    :param normalize: #TODO
 
     :return: None
     """
     console = Console()
     try:
-        validate_prediction_args(dataset, k)
+        validate_prediction_args(dataset, k, normalize)
         query_point = get_valid_query_point(query_data)
         user_datapoints, feature_map = load_dataset(dataset)
         validate_dataset_args(user_datapoints, feature_map, k, query_data, plot, x, y, z)
@@ -117,14 +130,39 @@ def main(
 
         if confirm:
             console.rule("[bold cyan] Configuration Attributes")
-            display_config(dataset, k, query_point, distance, describe, plot, x, y, z)
+            display_config(dataset, k, query_point, distance, normalize, describe, plot, x, y, z)
 
             if not typer.confirm("Proceed?"):
                 raise typer.Exit()
 
-        distances = calculate_distances(query_point, user_datapoints, distance)
-        k_nearest_dists = k_nearest_points(k, distances)
-        query_data_prediction = get_classification(k_nearest_dists)
+        column_values = get_column_values(user_datapoints, feature_map)
+        mean_of_data = mean_dataset(column_values)
+        st_devs = standard_deviation_dataset(column_values)
+        data_count, data_min, data_max = count_min_max(column_values)
+
+        normalized_values = None
+        normalized_pt = None
+
+        if not normalize:
+            distances = calculate_distances(query_point, user_datapoints, distance)
+            k_nearest_dists = k_nearest_points(k, distances)
+            query_data_prediction = get_classification(k_nearest_dists)
+
+        else:
+            if normalize == NormalizationMethods.zscore:
+                mean_std_map = get_mean_std_map(mean_of_data, st_devs)
+                normalized_values, normalized_pt = normalized_values_zscore(user_datapoints, feature_map,
+                                                                            mean_std_map, query_point)
+
+            elif normalize == NormalizationMethods.minmax:
+                min_max_map = get_min_max_map(data_min, data_max)
+                normalized_values, normalized_pt = normalized_values_minmax(user_datapoints, feature_map,
+                                                                            min_max_map, query_point)
+
+            normalized_user_points = get_normalized_datapoints(user_datapoints, normalized_values, feature_map)
+            normalized_distances = calculate_distances(normalized_pt, normalized_user_points, distance)
+            k_nearest_dists = k_nearest_points(k, normalized_distances)
+            query_data_prediction = get_classification(k_nearest_dists)
 
         console.print(
             Panel(
@@ -150,14 +188,8 @@ def main(
 
         if describe:
             console.rule("[bold cyan]Descriptive Statistics")
-            column_values = get_column_values(user_datapoints, feature_map)
-            mean_of_data = mean_dataset(column_values)
             median_of_data = median_dataset(column_values)
-
-            data_count, data_min, data_max = count_min_max(column_values)
             q1, q3 = quartile_values_dataset(column_values)
-            st_devs = standard_deviation_dataset(column_values)
-
             generate_desc_statistics(mean_of_data, data_count, data_min, data_max, q1, median_of_data, q3,
                                      st_devs)
 
