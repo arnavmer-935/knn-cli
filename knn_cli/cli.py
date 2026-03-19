@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import typer
 from typing import Annotated
 
@@ -14,7 +16,7 @@ from knn_cli.data_utils import (Distances,
                                 get_column_values,
                                 validate_prediction_args,
                                 validate_dataset_args,
-                                get_valid_query_point, NormalizationMethods
+                                get_valid_query_point, NormalizationMethods, Datapoint
                                 )
 
 from knn_cli.statistics import (mean_dataset,
@@ -39,23 +41,55 @@ NORM_LABEL = {
     NormalizationMethods.minmax: "Min-Max Scaling Normalization"
 }
 
-def display_config(dataset: str, k: int, query_pt: list[float], distance: Distances, normalize: NormalizationMethods,
-                   describe: bool, plot: bool, x: str, y: str, z: str) -> None:
+@dataclass
+class KNNConfig:
+    dataset: str
+    k: int
+    query_pt: list[float]
+    categories: list[str]
+    distance: Distances
+    normalize: NormalizationMethods
+    describe: bool
+    plot: bool
+    x: str
+    y: str
+    z: str
+
+
+@dataclass
+class Computation:
+    datapoints: list[Datapoint]
+    query_pt: list[float]
+    column_values: dict[str, list[float]]
+    feature_map: dict[str, int]
+    normalized_datapoints: list[Datapoint]
+    normalized_query: list[float]
+    mean_of_data: dict
+    st_devs: dict
+    count: float
+    min_dict: dict
+    max_dict: dict
+
+
+@dataclass
+class DescriptiveStats:
+    mean_of_data: dict
+    count: float
+    min_of_data: dict
+    max_of_data: dict
+    median_of_data: dict
+    Q1_of_data: dict
+    Q3_of_data: dict
+    stdev_of_data: dict
+
+
+def display_config(config: KNNConfig) -> None:
     """
     Displays a formatted table summarizing the user's configuration before execution.
     Called only when the --confirm flag is set, giving the user a chance to review
     all arguments prior to running the classification algorithm.
 
-    :param dataset: file path of the training dataset.
-    :param k: number of nearest neighbors to be considered.
-    :param query_pt: the parsed query point as a list of floats.
-    :param distance: the selected Distances enum member representing the distance metric.
-    :param normalize: #TODO
-    :param describe: boolean flag indicating whether descriptive statistics will be displayed.
-    :param plot: boolean flag indicating whether plotting mode is enabled.
-    :param x: feature name assigned to the x-axis, or None if not specified.
-    :param y: feature name assigned to the y-axis, or None if not specified.
-    :param z: feature name assigned to the z-axis, or None if not specified.
+    :param config: #TODO
 
     :return: None
     """
@@ -64,18 +98,18 @@ def display_config(dataset: str, k: int, query_pt: list[float], distance: Distan
     config_table.add_column("Attribute")
     config_table.add_column("Value")
 
-    x = "N/A" if x is None else x
-    y = "N/A" if y is None else y
-    z = "N/A" if z is None else z
-    nm = "N/A" if normalize is None else NORM_LABEL[normalize]
+    x = "N/A" if config.x is None else config.x
+    y = "N/A" if config.y is None else config.y
+    z = "N/A" if config.z is None else config.z
+    nm = "N/A" if config.normalize is None else NORM_LABEL[config.normalize]
 
-    config_table.add_row("Dataset", dataset)
-    config_table.add_row("k", str(k))
-    config_table.add_row("Query Datapoint", str(query_pt))
-    config_table.add_row("Distance Metric", DISTANCE_LABEL[distance])
+    config_table.add_row("Dataset", config.dataset)
+    config_table.add_row("k", str(config.k))
+    config_table.add_row("Query Datapoint", str(config.query_pt))
+    config_table.add_row("Distance Metric", DISTANCE_LABEL[config.distance])
     config_table.add_row("Normalization Method", nm)
-    config_table.add_row("Enable Descriptive Statistics?", str(describe))
-    config_table.add_row("Enable Plotting?", str(plot))
+    config_table.add_row("Enable Descriptive Statistics?", str(config.describe))
+    config_table.add_row("Enable Plotting?", str(config.plot))
     config_table.add_row("Plot Label for x-axis", x)
     config_table.add_row("Plot Label for y-axis", y)
     config_table.add_row("Plot Label for z-axis", z)
@@ -119,6 +153,7 @@ def main(
 
     :return: None
     """
+
     console = Console()
     try:
         validate_prediction_args(dataset, k, normalize)
@@ -128,9 +163,11 @@ def main(
 
         categories = sorted({pt.category for pt in user_datapoints})
 
+        user_config = KNNConfig(dataset, k, query_point, categories, distance, normalize, describe, plot, x, y, z)
+
         if confirm:
             console.rule("[bold cyan] Configuration Attributes")
-            display_config(dataset, k, query_point, distance, normalize, describe, plot, x, y, z)
+            display_config(user_config)
 
             if not typer.confirm("Proceed?"):
                 raise typer.Exit()
@@ -143,62 +180,118 @@ def main(
         normalized_values = None
         normalized_pt = None
 
-        if normalize is None:
-            distances = calculate_distances(query_point, user_datapoints, distance)
-            k_nearest_dists = k_nearest_points(k, distances)
-            query_data_prediction = get_classification(k_nearest_dists)
+        if normalize == NormalizationMethods.zscore:
+            mean_std_map = get_mean_std_map(mean_of_data, st_devs)
+            normalized_values, normalized_pt = normalized_values_zscore(user_datapoints, feature_map,
+                                                                        mean_std_map, query_point)
 
-        else:
-            if normalize == NormalizationMethods.zscore:
-                mean_std_map = get_mean_std_map(mean_of_data, st_devs)
-                normalized_values, normalized_pt = normalized_values_zscore(user_datapoints, feature_map,
-                                                                            mean_std_map, query_point)
+        elif normalize == NormalizationMethods.minmax:
+            min_max_map = get_min_max_map(data_min, data_max)
+            normalized_values, normalized_pt = normalized_values_minmax(user_datapoints, feature_map,
+                                                                        min_max_map, query_point)
 
-            elif normalize == NormalizationMethods.minmax:
-                min_max_map = get_min_max_map(data_min, data_max)
-                normalized_values, normalized_pt = normalized_values_minmax(user_datapoints, feature_map,
-                                                                            min_max_map, query_point)
-
+        normalized_user_points = None
+        if normalized_values is not None:
             normalized_user_points = get_normalized_datapoints(user_datapoints, normalized_values, feature_map)
-            normalized_distances = calculate_distances(normalized_pt, normalized_user_points, distance)
-            k_nearest_dists = k_nearest_points(k, normalized_distances)
-            query_data_prediction = get_classification(k_nearest_dists)
 
-        console.print(
-            Panel(
-                Align.center(f"[bold green]{query_data_prediction}[/bold green]"),
-                title="Prediction",
-                border_style="green"
-            )
+        user_computation_config = Computation(
+            user_datapoints,
+            query_point,
+            column_values,
+            feature_map,
+            normalized_user_points,
+            normalized_pt,
+            mean_of_data,
+            st_devs,
+            data_count,
+            data_min,
+            data_max
         )
 
-        console.rule("[bold cyan]Dataset Summary")
-        print("Number of features:", len(feature_map))
-        cat_str = ""
-        for i in range(len(categories)):
-            ct = categories[i][0].upper() + categories[i][1:].lower()
-
-            if i == len(categories) - 1:
-                cat_str += ct
-            else:
-                cat_str += ct + ", "
-
-        print("Categories:", cat_str)
-        print()
-
-        if describe:
-            console.rule("[bold cyan]Descriptive Statistics")
-            median_of_data = median_dataset(column_values)
-            q1, q3 = quartile_values_dataset(column_values)
-            generate_desc_statistics(mean_of_data, data_count, data_min, data_max, q1, median_of_data, q3,
-                                     st_devs)
-
-        if plot:
-            generate_plots(user_datapoints, feature_map, k, query_point, x, y, z)
+        """if tts is None: #TODO: add typer option: "tts" for train test splits
+            pass
+            classification_and_analysis(console, user_config, user_computation_config)
+        
+        else:
+            evaluation()"""
 
     except ValueError as e:
         print(e)
-        raise typer.Exit(code = 1)
+        raise typer.Exit(code=1)
+
+
+def classification_and_analysis(console: Console, knn_config: KNNConfig, computation: Computation):
+    """
+    should contain plot generation, descriptive stats, classification logic
+    :return: None
+    """
+
+    requirements = computation.normalized_query, computation.normalized_datapoints
+    query_data_prediction = None
+
+    if any(x for x in requirements) is None:
+        distances = calculate_distances(knn_config.query_pt, computation.datapoints, knn_config.distance)
+        k_nearest_dists = k_nearest_points(knn_config.k, distances)
+        query_data_prediction = get_classification(k_nearest_dists)
+
+    else:
+        normalized_distances = calculate_distances(requirements[0], requirements[1], knn_config.distance)
+        k_nearest_dists = k_nearest_points(knn_config.k, normalized_distances)
+        query_data_prediction = get_classification(k_nearest_dists)
+
+    console.print(
+        Panel(
+            Align.center(f"[bold green]{query_data_prediction}[/bold green]"),
+            title="Prediction",
+            border_style="green"
+        )
+    )
+
+    console.rule("[bold cyan]Dataset Summary")
+    print("Number of features:", len(computation.feature_map))
+    categories = knn_config.categories
+    cat_str = ""
+    for i in range(len(categories)):
+        ct = categories[i][0].upper() + categories[i][1:].lower()
+
+        if i == len(categories) - 1:
+            cat_str += ct
+        else:
+            cat_str += ct + ", "
+
+    print("Categories:", cat_str)
+    print()
+
+    if knn_config.describe:
+        console.rule("[bold cyan]Descriptive Statistics")
+        median_of_data = median_dataset(computation.column_values)
+        q1, q3 = quartile_values_dataset(computation.column_values)
+
+        stats_config = DescriptiveStats(
+            computation.mean_of_data,
+            computation.count,
+            computation.min_dict,
+            computation.max_dict,
+            median_of_data,
+            q1, q3,
+            computation.st_devs
+        )
+
+        generate_desc_statistics(stats_config)
+
+    if knn_config.plot:
+        generate_plots(computation.datapoints, computation.feature_map, knn_config.k, knn_config.query_pt,
+                       knn_config.x, knn_config.y, knn_config.z)
+
+def evaluation():
+    """
+    should contain train, test splitting, eval metrics. Cannot be invoked simultaneously with
+    classification_and_analysis.
+    :return: None
+    """
+    pass
+
+
 
 if __name__ == '__main__':
     typer.run(main)

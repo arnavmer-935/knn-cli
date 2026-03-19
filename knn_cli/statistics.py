@@ -1,13 +1,11 @@
 from math import sqrt
 from rich.console import Console
 from rich.table import Table
+
+from knn_cli.cli import DescriptiveStats
 from knn_cli.data_utils import median
 
-def generate_desc_statistics(mean_of_data: dict[str, float],
-                             ct: float, min_v: dict[str, float],
-                             max_v: dict[str, float], q1: dict[str, float],
-                             medians: dict[str, float], q3: dict[str, float],
-                             std: dict[str, float]) -> None:
+def generate_desc_statistics(stats_config: DescriptiveStats) -> None:
     """
     The method responsible for generating a table containing descriptive statistics about the dataset.
     It produces the counts, mean, min and max values, quartile values,
@@ -15,33 +13,24 @@ def generate_desc_statistics(mean_of_data: dict[str, float],
     The table does not contain the categorical values (dependent variable) when 
     descriptive statistics are being reported.
      
-    :param mean_of_data: A dictionary where the key is the column name, 
-    and the value is the average of that column's values
-    
-    :param ct: The count (number of data values) for each column in the dataset.
-    :param min_v: A dictionary which maps a column name to its minimum value. 
-    :param max_v: A dictionary which maps a column name to its maximum value.
-    :param q1: A dictionary which maps a column name to the value at its 25th percentile.
-    :param medians: A dictionary which maps a column name to its median value (50th percentile).
-    :param q3: A dictionary which maps a column name to the value at its 75th percentile.
-    :param std: A dictionary which maps a column name to the value of its standard deviation.
+    :param stats_config: #TODO
     
     :return: None
     """
     console = Console()
     stats_table = Table("Feature", "Count", "Min", "Max", "25%", "50%", "75%",
                         "Mean", "Std\nDev", title_justify="center")
-    for fea in mean_of_data:
+    for fea in stats_config.mean_of_data:
         stats_table.add_row(
             fea,
-            f"{ct:.2f}",
-            f"{min_v[fea]:.2f}",
-            f"{max_v[fea]:.2f}",
-            f"{q1[fea]:.2f}",
-            f"{medians[fea]:.2f}",
-            f"{q3[fea]:.2f}",
-            f"{mean_of_data[fea]:.2f}",
-            f"{std[fea]:.2f}"
+            f"{stats_config.count:.2f}",
+            f"{stats_config.min_of_data[fea]:.2f}",
+            f"{stats_config.max_of_data[fea]:.2f}",
+            f"{stats_config.Q1_of_data[fea]:.2f}",
+            f"{stats_config.median_of_data[fea]:.2f}",
+            f"{stats_config.Q3_of_data[fea]:.2f}",
+            f"{stats_config.mean_of_data[fea]:.2f}",
+            f"{stats_config.stdev_of_data[fea]:.2f}"
         )
 
     console.print(stats_table, justify="center")
