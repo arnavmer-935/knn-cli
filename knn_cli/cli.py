@@ -281,9 +281,8 @@ def evaluation(console: Console, config: KNNConfig, computation: Computation):
 
     model_accuracy = get_accuracy(config.k, config.distance, normalized_training_points, normalized_testing_points)
 
-    dummy_accuracy = 0.55
-    disp_color = get_format_color(dummy_accuracy)
-    accuracy = f"{(dummy_accuracy * 100):.2f}%"
+    disp_color = get_format_color(model_accuracy)
+    accuracy = f"{(model_accuracy * 100):.2f}%"
     console.print(
         Panel(
             Align.center(f"[bold {disp_color}] {accuracy} [/{disp_color}]"),
