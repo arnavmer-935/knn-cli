@@ -191,7 +191,7 @@ def main(
             classification_and_analysis(console, user_config, user_computation_config)
 
         else:
-            evaluation()
+            evaluation() #TODO
 
     except ValueError as e:
         print(e)
@@ -267,8 +267,8 @@ def evaluation():
     classification_and_analysis.
     :return: None
     """
+    #TODO
     pass
-
 
 
 if __name__ == '__main__':

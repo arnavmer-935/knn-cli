@@ -3,13 +3,14 @@ from knn_cli.data_utils import Datapoint
 from knn_cli.normalization import (
     minmax,
     zscore,
-    normalized_values_minmax,
-    normalized_values_zscore,
+    normalize_dataset_minmax,
+    normalize_query_point_minmax,
+    normalize_dataset_zscore,
+    normalize_query_point_zscore,
     get_normalized_datapoints,
     get_min_max_map,
     get_mean_std_map,
 )
-
 
 class TestMinMax(unittest.TestCase):
 
@@ -91,14 +92,14 @@ class TestNormalizedValuesMinMax(unittest.TestCase):
         self.query_point = [2.0, 20.0]
 
     def test_output_contains_same_keys_as_feature_map(self):
-        result, _ = normalized_values_minmax(
-            self.datapoints, self.feature_map, self.min_max_map, self.query_point
+        result = normalize_dataset_minmax(
+            self.datapoints, self.feature_map, self.min_max_map
         )
         self.assertEqual(set(result.keys()), set(self.feature_map.keys()))
 
     def test_values_bounded_between_zero_and_one(self):
-        result, _ = normalized_values_minmax(
-            self.datapoints, self.feature_map, self.min_max_map, self.query_point
+        result = normalize_dataset_minmax(
+            self.datapoints, self.feature_map, self.min_max_map
         )
         for col, values in result.items():
             for v in values:
@@ -106,9 +107,8 @@ class TestNormalizedValuesMinMax(unittest.TestCase):
                 self.assertLessEqual(v, 1.0)
 
     def test_known_column_produces_correct_values(self):
-        # col1: (1-1)/(3-1)=0.0, (2-1)/(3-1)=0.5, (3-1)/(3-1)=1.0
-        result, _ = normalized_values_minmax(
-            self.datapoints, self.feature_map, self.min_max_map, self.query_point
+        result = normalize_dataset_minmax(
+            self.datapoints, self.feature_map, self.min_max_map
         )
         self.assertAlmostEqual(result["col1"][0], 0.0, places=5)
         self.assertAlmostEqual(result["col1"][1], 0.5, places=5)
@@ -116,12 +116,11 @@ class TestNormalizedValuesMinMax(unittest.TestCase):
 
     def test_query_point_normalized_correctly(self):
         # col1: (2-1)/(3-1) = 0.5, col2: (20-10)/(30-10) = 0.5
-        _, normalized_pt = normalized_values_minmax(
-            self.datapoints, self.feature_map, self.min_max_map, self.query_point
+        normalized_pt = normalize_query_point_minmax(
+            self.feature_map, self.min_max_map, self.query_point
         )
         self.assertAlmostEqual(normalized_pt[0], 0.5, places=5)
         self.assertAlmostEqual(normalized_pt[1], 0.5, places=5)
-
 
 class TestNormalizedValuesZScore(unittest.TestCase):
 
@@ -136,15 +135,14 @@ class TestNormalizedValuesZScore(unittest.TestCase):
         self.query_point = [2.0, 20.0]
 
     def test_output_contains_same_keys_as_feature_map(self):
-        result, _ = normalized_values_zscore(
-            self.datapoints, self.feature_map, self.mean_std_map, self.query_point
+        result = normalize_dataset_zscore(
+            self.datapoints, self.feature_map, self.mean_std_map
         )
         self.assertEqual(set(result.keys()), set(self.feature_map.keys()))
 
     def test_known_column_produces_correct_values(self):
-        # col1: (1-2)/1=-1, (2-2)/1=0, (3-2)/1=1
-        result, _ = normalized_values_zscore(
-            self.datapoints, self.feature_map, self.mean_std_map, self.query_point
+        result = normalize_dataset_zscore(
+            self.datapoints, self.feature_map, self.mean_std_map
         )
         self.assertAlmostEqual(result["col1"][0], -1.0, places=5)
         self.assertAlmostEqual(result["col1"][1],  0.0, places=5)
@@ -152,15 +150,14 @@ class TestNormalizedValuesZScore(unittest.TestCase):
 
     def test_zero_std_column_returns_all_zeros(self):
         mean_std_map = {"col1": (2.0, 0.0), "col2": (20.0, 10.0)}
-        result, _ = normalized_values_zscore(
-            self.datapoints, self.feature_map, mean_std_map, self.query_point
+        result = normalize_dataset_zscore(
+            self.datapoints, self.feature_map, mean_std_map
         )
         self.assertEqual(result["col1"], [0, 0, 0])
 
     def test_query_point_normalized_correctly(self):
-        # col1: (2-2)/1=0.0, col2: (20-20)/10=0.0
-        _, normalized_pt = normalized_values_zscore(
-            self.datapoints, self.feature_map, self.mean_std_map, self.query_point
+        normalized_pt = normalize_query_point_zscore(
+            self.feature_map, self.mean_std_map, self.query_point
         )
         self.assertAlmostEqual(normalized_pt[0], 0.0, places=5)
         self.assertAlmostEqual(normalized_pt[1], 0.0, places=5)
