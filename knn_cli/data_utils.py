@@ -54,6 +54,20 @@ class KNNConfig:
     z: str
     tts: float
 
+@dataclass
+class Computation:
+    datapoints: list[Datapoint]
+    query_pt: list[float]
+    column_values: dict[str, list[float]]
+    feature_map: dict[str, int]
+    normalized_datapoints: list[Datapoint]
+    normalized_query: list[float]
+    mean_of_data: dict
+    st_devs: dict
+    count: float
+    min_dict: dict
+    max_dict: dict
+
 def get_column_values(datapoints: list[Datapoint], feature_map: dict[str, int]) -> dict[str, list[float]]:
     """
     Extracts all values for each feature column across the dataset.
@@ -225,3 +239,13 @@ def get_valid_query_point(query_point: str) -> list[float]:
             raise ValueError("Query datapoint contains non-numerical data.")
 
     return result
+
+def get_format_color(accuracy: float) -> str:
+    if 1 >= accuracy >= 0.75:
+        return "bold green"
+
+    elif 0.5 <= accuracy < 0.75:
+        return "bold yellow"
+
+    else:
+        return "bold red"

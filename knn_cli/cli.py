@@ -17,7 +17,7 @@ from knn_cli.data_utils import (Distances,
                                 validate_prediction_args,
                                 validate_dataset_args,
                                 get_valid_query_point, NormalizationMethods, Datapoint, KNNConfig, NORM_LABEL,
-                                DISTANCE_LABEL, DescriptiveStats
+                                DISTANCE_LABEL, DescriptiveStats, get_format_color
                                 )
 
 from knn_cli.statistics import (mean_dataset,
@@ -31,21 +31,8 @@ from knn_cli.statistics import (mean_dataset,
 from knn_cli.normalization import get_mean_std_map, get_min_max_map, \
     get_normalized_datapoints, normalize_query_point_minmax, normalize_dataset_zscore, normalize_query_point_zscore, \
     normalize_dataset_minmax
+from knn_cli.train_test_splitting import train_test_split, get_accuracy
 
-
-@dataclass
-class Computation:
-    datapoints: list[Datapoint]
-    query_pt: list[float]
-    column_values: dict[str, list[float]]
-    feature_map: dict[str, int]
-    normalized_datapoints: list[Datapoint]
-    normalized_query: list[float]
-    mean_of_data: dict
-    st_devs: dict
-    count: float
-    min_dict: dict
-    max_dict: dict
 
 def display_config(config: KNNConfig) -> None:
     """
@@ -187,16 +174,32 @@ def main(
             data_max
         )
 
+        if describe:
+            console.rule("[bold cyan]Descriptive Statistics")
+            median_of_data = median_dataset(column_values)
+            q1, q3 = quartile_values_dataset(column_values)
+
+            stats_config = DescriptiveStats(
+                mean_of_data,
+                data_count,
+                data_min,
+                data_max,
+                median_of_data,
+                q1, q3,
+                st_devs
+            )
+
+            generate_desc_statistics(stats_config)
+
         if tts is None:
             classification_and_analysis(console, user_config, user_computation_config)
 
         else:
-            evaluation() #TODO
+            evaluation(console, user_config, user_computation_config)
 
     except ValueError as e:
         print(e)
         raise typer.Exit(code=1)
-
 
 def classification_and_analysis(console: Console, knn_config: KNNConfig, computation: Computation):
     """
@@ -240,36 +243,56 @@ def classification_and_analysis(console: Console, knn_config: KNNConfig, computa
     print("Categories:", cat_str)
     print()
 
-    if knn_config.describe:
-        console.rule("[bold cyan]Descriptive Statistics")
-        median_of_data = median_dataset(computation.column_values)
-        q1, q3 = quartile_values_dataset(computation.column_values)
-
-        stats_config = DescriptiveStats(
-            computation.mean_of_data,
-            computation.count,
-            computation.min_dict,
-            computation.max_dict,
-            median_of_data,
-            q1, q3,
-            computation.st_devs
-        )
-
-        generate_desc_statistics(stats_config)
-
     if knn_config.plot:
         generate_plots(computation.datapoints, computation.feature_map, knn_config.k, knn_config.query_pt,
                        knn_config.x, knn_config.y, knn_config.z)
 
-def evaluation():
+def evaluation(console: Console, config: KNNConfig, computation: Computation):
     """
     should contain train, test splitting, eval metrics. Cannot be invoked simultaneously with
     classification_and_analysis.
     :return: None
     """
-    #TODO
-    pass
+    
+    data_feature_map = computation.feature_map
+    training, testing = train_test_split(computation.datapoints, config.tts)
+    training_column_values = get_column_values(training, data_feature_map)
 
+    normalized_training_values = None
+    normalized_testing_values = None
+
+    if config.normalize == NormalizationMethods.zscore:
+
+        training_mean_map = mean_dataset(training_column_values)
+        training_std_map = standard_deviation_dataset(training_column_values)
+
+        training_mean_std_map = get_mean_std_map(training_mean_map, training_std_map)
+
+        normalized_training_values = normalize_dataset_zscore(training, data_feature_map, training_mean_std_map)
+        normalized_testing_values = normalize_dataset_zscore(testing, data_feature_map, training_mean_std_map)
+
+    elif config.normalize == NormalizationMethods.minmax:
+        _, training_min_map, training_max_map = count_min_max(training_column_values)
+
+        min_max_map = get_min_max_map(training_min_map, training_max_map)
+        normalized_training_values = normalize_dataset_minmax(training, data_feature_map, min_max_map)
+        normalized_testing_values = normalize_dataset_minmax(testing, data_feature_map, min_max_map)
+
+    normalized_training_points = get_normalized_datapoints(training, normalized_training_values, data_feature_map)
+    normalized_testing_points = get_normalized_datapoints(testing, normalized_testing_values, data_feature_map)
+
+    model_accuracy = get_accuracy(config.k, config.distance, normalized_training_points, normalized_testing_points)
+
+    dummy_accuracy = 0.55
+    disp_color = get_format_color(dummy_accuracy)
+    accuracy = f"{(dummy_accuracy * 100):.2f}%"
+    console.print(
+        Panel(
+            Align.center(f"[bold {disp_color}] {accuracy} [/{disp_color}]"),
+            title="Model Accuracy",
+            border_style=f"{disp_color}"
+        )
+    )
 
 if __name__ == '__main__':
     typer.run(main)
