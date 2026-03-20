@@ -2,8 +2,7 @@ from math import sqrt
 from rich.console import Console
 from rich.table import Table
 
-from knn_cli.cli import DescriptiveStats
-from knn_cli.data_utils import median
+from knn_cli.data_utils import median, DescriptiveStats
 
 def generate_desc_statistics(stats_config: DescriptiveStats) -> None:
     """

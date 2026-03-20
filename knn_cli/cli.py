@@ -16,7 +16,8 @@ from knn_cli.data_utils import (Distances,
                                 get_column_values,
                                 validate_prediction_args,
                                 validate_dataset_args,
-                                get_valid_query_point, NormalizationMethods, Datapoint
+                                get_valid_query_point, NormalizationMethods, Datapoint, KNNConfig, NORM_LABEL,
+                                DISTANCE_LABEL, DescriptiveStats
                                 )
 
 from knn_cli.statistics import (mean_dataset,
@@ -27,33 +28,9 @@ from knn_cli.statistics import (mean_dataset,
                                 generate_desc_statistics
                                 )
 
-from knn_cli.normalization import get_mean_std_map, normalized_values_zscore, get_min_max_map, normalized_values_minmax, \
-    get_normalized_datapoints
-
-DISTANCE_LABEL = {
-    Distances.eucl: "Euclidean",
-    Distances.manh: "Manhattan",
-    Distances.cos: "Cosine Similarity"
-}
-
-NORM_LABEL = {
-    NormalizationMethods.zscore: "Z-Score Normalization",
-    NormalizationMethods.minmax: "Min-Max Scaling Normalization"
-}
-
-@dataclass
-class KNNConfig:
-    dataset: str
-    k: int
-    query_pt: list[float]
-    categories: list[str]
-    distance: Distances
-    normalize: NormalizationMethods
-    describe: bool
-    plot: bool
-    x: str
-    y: str
-    z: str
+from knn_cli.normalization import get_mean_std_map, get_min_max_map, \
+    get_normalized_datapoints, normalize_query_point_minmax, normalize_dataset_zscore, normalize_query_point_zscore, \
+    normalize_dataset_minmax
 
 
 @dataclass
@@ -69,19 +46,6 @@ class Computation:
     count: float
     min_dict: dict
     max_dict: dict
-
-
-@dataclass
-class DescriptiveStats:
-    mean_of_data: dict
-    count: float
-    min_of_data: dict
-    max_of_data: dict
-    median_of_data: dict
-    Q1_of_data: dict
-    Q3_of_data: dict
-    stdev_of_data: dict
-
 
 def display_config(config: KNNConfig) -> None:
     """
@@ -102,11 +66,22 @@ def display_config(config: KNNConfig) -> None:
     y = "N/A" if config.y is None else config.y
     z = "N/A" if config.z is None else config.z
     nm = "N/A" if config.normalize is None else NORM_LABEL[config.normalize]
+    query = "N/A" if config.query_pt is None else config.query_pt
+
+    tts_msg = None
+    if config.tts is None:
+        tts_msg = "N/A"
+
+    else:
+        training_percent = "N/A" if config.tts is None else f"{(1 - config.tts) * 100:.2f}%"
+        testing_percent = "N/A" if config.tts is None else f"{config.tts * 100:.2f}%"
+        tts_msg = f"{training_percent} training, {testing_percent} testing"
 
     config_table.add_row("Dataset", config.dataset)
     config_table.add_row("k", str(config.k))
-    config_table.add_row("Query Datapoint", str(config.query_pt))
+    config_table.add_row("Query Datapoint", str(query))
     config_table.add_row("Distance Metric", DISTANCE_LABEL[config.distance])
+    config_table.add_row("Train-Test split", tts_msg)
     config_table.add_row("Normalization Method", nm)
     config_table.add_row("Enable Descriptive Statistics?", str(config.describe))
     config_table.add_row("Enable Plotting?", str(config.plot))
@@ -121,7 +96,9 @@ def main(
     k: int = typer.Argument("-k", help="the number of nearest neighbors to be considered."),
     query_data: Annotated[str, typer.Option("--p", help="the query data point's feature values separated by whitespace.")] = None,
     distance: Annotated[Distances, typer.Option("--m", help = "the distance metric", case_sensitive = False)] = Distances.eucl,
-    normalize: Annotated[NormalizationMethods, typer.Option("--normalize", help="normalizes feature values using z-scores/min-max scaling.",)] = None,
+    tts: Annotated[float, typer.Option("--train-test-split", help="splits dataset into train and test sets based on the given fraction. "
+                                                                  "e.g. 0.2 uses an 80/20 split for training/testing respectively.")] = None,
+    normalize: Annotated[NormalizationMethods, typer.Option("--normalize", help="normalizes feature values using z-scores/min-max scaling.")] = None,
     describe: Annotated[bool, typer.Option(help="display in the standard output descriptive statistics of the data")] = False,
     plot: Annotated[bool, typer.Option(help="enables plotting mode")] = False,
     x: Annotated[str, typer.Option(help="label for the x axis")] = None,
@@ -143,27 +120,29 @@ def main(
     :param k: number of nearest neighbors to be considered.
     :param query_data: whitespace-separated feature values of the query point.
     :param distance: the distance metric to use. Accepts eucl, manh, or cos. Defaults to eucl.
+    :param tts: the fraction required for train-test splitting and evaluating model accuracy.
     :param describe: if True, displays a descriptive statistics table for the dataset.
     :param plot: if True, enables scatter plot generation.
     :param x: feature name to plot on the x-axis. Requires --plot.
     :param y: feature name to plot on the y-axis. Requires --x.
     :param z: feature name to plot on the z-axis. Produces a 3D plot. Requires --y.
     :param confirm: if True, displays a configuration summary and prompts the user to proceed.
-    :param normalize: #TODO
+    :param normalize: the normalization method to be used for scaling the data values.
+    must be either "zscore" or "minmax".
 
     :return: None
     """
 
     console = Console()
     try:
-        validate_prediction_args(dataset, k, normalize)
-        query_point = get_valid_query_point(query_data)
+        validate_prediction_args(dataset, k, normalize, tts)
+        query_point = get_valid_query_point(query_data) if query_data is not None else None
         user_datapoints, feature_map = load_dataset(dataset)
-        validate_dataset_args(user_datapoints, feature_map, k, query_data, plot, x, y, z)
+        validate_dataset_args(user_datapoints, feature_map, k, query_data, plot, x, y, z, tts)
 
         categories = sorted({pt.category for pt in user_datapoints})
 
-        user_config = KNNConfig(dataset, k, query_point, categories, distance, normalize, describe, plot, x, y, z)
+        user_config = KNNConfig(dataset, k, query_point, categories, distance, normalize, describe, plot, x, y, z, tts)
 
         if confirm:
             console.rule("[bold cyan] Configuration Attributes")
@@ -182,13 +161,13 @@ def main(
 
         if normalize == NormalizationMethods.zscore:
             mean_std_map = get_mean_std_map(mean_of_data, st_devs)
-            normalized_values, normalized_pt = normalized_values_zscore(user_datapoints, feature_map,
-                                                                        mean_std_map, query_point)
+            normalized_values = normalize_dataset_zscore(user_datapoints, feature_map, mean_std_map)
+            normalized_pt = normalize_query_point_zscore(feature_map, mean_std_map, query_point)
 
         elif normalize == NormalizationMethods.minmax:
             min_max_map = get_min_max_map(data_min, data_max)
-            normalized_values, normalized_pt = normalized_values_minmax(user_datapoints, feature_map,
-                                                                        min_max_map, query_point)
+            normalized_values = normalize_dataset_minmax(user_datapoints, feature_map, min_max_map)
+            normalized_pt = normalize_query_point_minmax(feature_map, min_max_map, query_point)
 
         normalized_user_points = None
         if normalized_values is not None:
@@ -208,12 +187,11 @@ def main(
             data_max
         )
 
-        """if tts is None: #TODO: add typer option: "tts" for train test splits
-            pass
+        if tts is None:
             classification_and_analysis(console, user_config, user_computation_config)
-        
+
         else:
-            evaluation()"""
+            evaluation()
 
     except ValueError as e:
         print(e)
@@ -229,7 +207,7 @@ def classification_and_analysis(console: Console, knn_config: KNNConfig, computa
     requirements = computation.normalized_query, computation.normalized_datapoints
     query_data_prediction = None
 
-    if any(x for x in requirements) is None:
+    if any(x is None for x in requirements):
         distances = calculate_distances(knn_config.query_pt, computation.datapoints, knn_config.distance)
         k_nearest_dists = k_nearest_points(knn_config.k, distances)
         query_data_prediction = get_classification(k_nearest_dists)

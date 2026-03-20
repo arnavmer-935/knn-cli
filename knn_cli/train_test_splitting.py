@@ -10,12 +10,18 @@ def train_test_split(datapoints: list[Datapoint], fraction: float) -> tuple[list
     copied_data = deepcopy(datapoints)
     shuffle(copied_data)
 
-    training_size = len(copied_data) - floor(fraction * len(copied_data))
+    testing_size = floor(fraction * len(copied_data))
+    if testing_size == 0:
+        raise ValueError("Fraction is too small for conducting a meaningful train-test split.")
+
+    if testing_size == len(copied_data):
+        raise ValueError("Testing split fraction is too large and leaves no meaningful training data.")
+
+    training_size = len(copied_data) - testing_size
     testing_data = copied_data[training_size:]
     training_data = copied_data[:training_size]
 
     return training_data, testing_data
-
 
 def get_accuracy(k: int, distance: str, training_data: list[Datapoint], testing_data: list[Datapoint]) -> float:
 

@@ -15,35 +15,55 @@ def get_normalized_datapoints(datapoints, normalized_values, feature_map):
 
     return normalized_datapoints
 
-def normalized_values_zscore(datapoints, feature_map, mean_std_map, query_point):
+def normalize_dataset_zscore(datapoints, feature_map, mean_std_map):
     column_vals = get_column_values(datapoints, feature_map)
     normalized_values = {}
-    normalized_query_point = []
 
     for col_name, values in column_vals.items():
         mean, std = mean_std_map[col_name]
         normalized_values[col_name] = zscore(values, mean, std)
-        idx = feature_map[col_name]
 
-        normalized_pt_value = (query_point[idx] - mean)/std if std != 0 else 0
-        normalized_query_point.append(normalized_pt_value)
+    return normalized_values
 
-    return normalized_values, normalized_query_point
+def normalize_query_point_zscore(feature_map, mean_std_map, query_point):
+    if query_point is None:
+        return None
 
-def normalized_values_minmax(datapoints, feature_map, min_max_map, query_point):
+    else:
+        normalized_query_point = []
+        for col_name in feature_map.keys():
+            mean, std = mean_std_map[col_name]
+            idx = feature_map[col_name]
+
+            normalized_pt_value = (query_point[idx] - mean) / std if std != 0 else 0
+            normalized_query_point.append(normalized_pt_value)
+
+        return normalized_query_point
+
+def normalize_dataset_minmax(datapoints, feature_map, min_max_map):
     column_vals = get_column_values(datapoints, feature_map)
     normalized_values = {}
-    normalized_query_point = []
 
     for col_name, values in column_vals.items():
         min_v, max_v = min_max_map[col_name]
         normalized_values[col_name] = minmax(values, min_v, max_v)
-        idx = feature_map[col_name]
 
-        normalized_pt_value = (query_point[idx] - min_v) / (max_v - min_v) if max_v != min_v else 0
-        normalized_query_point.append(normalized_pt_value)
+    return normalized_values
 
-    return normalized_values, normalized_query_point
+def normalize_query_point_minmax(feature_map, min_max_map, query_point):
+    if query_point is None:
+        return None
+
+    else:
+        normalized_query_point = []
+        for col_name in feature_map.keys():
+            min_v, max_v = min_max_map[col_name]
+            idx = feature_map[col_name]
+
+            normalized_pt_value = (query_point[idx] - min_v) / (max_v - min_v) if max_v != min_v else 0
+            normalized_query_point.append(normalized_pt_value)
+
+        return normalized_query_point
 
 def zscore(values, mean, std):
     res = []
