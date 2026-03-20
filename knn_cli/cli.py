@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 import typer
 from typing import Annotated
 
@@ -17,7 +15,7 @@ from knn_cli.data_utils import (Distances,
                                 validate_prediction_args,
                                 validate_dataset_args,
                                 get_valid_query_point, NormalizationMethods, Datapoint, KNNConfig, NORM_LABEL,
-                                DISTANCE_LABEL, DescriptiveStats, get_format_color
+                                DISTANCE_LABEL, DescriptiveStats, get_format_color, Computation
                                 )
 
 from knn_cli.statistics import (mean_dataset,
