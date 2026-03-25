@@ -240,12 +240,33 @@ def get_valid_query_point(query_point: str) -> list[float]:
 
     return result
 
-def get_format_color(accuracy: float) -> str:
-    if 1 >= accuracy >= 0.75:
-        return "bold green"
+def get_format_color(improvement: float) -> str:
+    if improvement < 0:
+        return "red"
 
-    elif 0.5 <= accuracy < 0.75:
-        return "bold yellow"
+    elif improvement < 0.02:
+        return "yellow"
+
+    elif improvement < 0.08:
+        return "cyan"
 
     else:
-        return "bold red"
+        return "green"
+
+def get_improvement_interpretation(improvement: float) -> str:
+
+    if improvement < 0:
+        return "Model accuracy is worse than baseline accuracy."
+    elif improvement < 0.02:
+        return "Model has produced no meaningful improvement."
+    elif improvement < 0.08:
+        return "Model has produced a modest improvement."
+    elif improvement < 0.2:
+        return "Model has produced a strong improvement."
+    else:
+        return "Model has produced a very strong improvement (please verify dataset)."
+
+
+
+
+

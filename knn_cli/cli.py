@@ -14,8 +14,9 @@ from knn_cli.data_utils import (Distances,
                                 get_column_values,
                                 validate_prediction_args,
                                 validate_dataset_args,
-                                get_valid_query_point, NormalizationMethods, Datapoint, KNNConfig, NORM_LABEL,
-                                DISTANCE_LABEL, DescriptiveStats, get_format_color, Computation
+                                get_valid_query_point, NormalizationMethods, KNNConfig, NORM_LABEL,
+                                DISTANCE_LABEL, DescriptiveStats, get_format_color, Computation,
+                                get_improvement_interpretation
                                 )
 
 from knn_cli.statistics import (mean_dataset,
@@ -29,7 +30,7 @@ from knn_cli.statistics import (mean_dataset,
 from knn_cli.normalization import get_mean_std_map, get_min_max_map, \
     get_normalized_datapoints, normalize_query_point_minmax, normalize_dataset_zscore, normalize_query_point_zscore, \
     normalize_dataset_minmax
-from knn_cli.train_test_splitting import train_test_split, get_accuracy
+from knn_cli.train_test_splitting import train_test_split, get_accuracy, get_baseline_accuracy
 
 
 def display_config(config: KNNConfig) -> None:
@@ -204,7 +205,6 @@ def classification_and_analysis(console: Console, knn_config: KNNConfig, computa
     should contain plot generation, descriptive stats, classification logic
     :return: None
     """
-
     requirements = computation.normalized_query, computation.normalized_datapoints
     query_data_prediction = None
 
@@ -245,48 +245,68 @@ def classification_and_analysis(console: Console, knn_config: KNNConfig, computa
         generate_plots(computation.datapoints, computation.feature_map, knn_config.k, knn_config.query_pt,
                        knn_config.x, knn_config.y, knn_config.z)
 
+
 def evaluation(console: Console, config: KNNConfig, computation: Computation):
     """
     should contain train, test splitting, eval metrics. Cannot be invoked simultaneously with
     classification_and_analysis.
     :return: None
     """
-    
     data_feature_map = computation.feature_map
     training, testing = train_test_split(computation.datapoints, config.tts)
     training_column_values = get_column_values(training, data_feature_map)
 
     normalized_training_values = None
     normalized_testing_values = None
+    model_baseline_accuracy = None
+    model_accuracy = None
 
-    if config.normalize == NormalizationMethods.zscore:
+    if config.normalize is None:
+        model_baseline_accuracy = get_baseline_accuracy(training, testing)
+        model_accuracy = get_accuracy(config.k, config.distance, training, testing)
 
-        training_mean_map = mean_dataset(training_column_values)
-        training_std_map = standard_deviation_dataset(training_column_values)
+    else:
+        if config.normalize == NormalizationMethods.zscore:
 
-        training_mean_std_map = get_mean_std_map(training_mean_map, training_std_map)
+            training_mean_map = mean_dataset(training_column_values)
+            training_std_map = standard_deviation_dataset(training_column_values)
 
-        normalized_training_values = normalize_dataset_zscore(training, data_feature_map, training_mean_std_map)
-        normalized_testing_values = normalize_dataset_zscore(testing, data_feature_map, training_mean_std_map)
+            training_mean_std_map = get_mean_std_map(training_mean_map, training_std_map)
 
-    elif config.normalize == NormalizationMethods.minmax:
-        _, training_min_map, training_max_map = count_min_max(training_column_values)
+            normalized_training_values = normalize_dataset_zscore(training, data_feature_map, training_mean_std_map)
+            normalized_testing_values = normalize_dataset_zscore(testing, data_feature_map, training_mean_std_map)
 
-        min_max_map = get_min_max_map(training_min_map, training_max_map)
-        normalized_training_values = normalize_dataset_minmax(training, data_feature_map, min_max_map)
-        normalized_testing_values = normalize_dataset_minmax(testing, data_feature_map, min_max_map)
+        elif config.normalize == NormalizationMethods.minmax:
+            _, training_min_map, training_max_map = count_min_max(training_column_values)
 
-    normalized_training_points = get_normalized_datapoints(training, normalized_training_values, data_feature_map)
-    normalized_testing_points = get_normalized_datapoints(testing, normalized_testing_values, data_feature_map)
+            min_max_map = get_min_max_map(training_min_map, training_max_map)
+            normalized_training_values = normalize_dataset_minmax(training, data_feature_map, min_max_map)
+            normalized_testing_values = normalize_dataset_minmax(testing, data_feature_map, min_max_map)
 
-    model_accuracy = get_accuracy(config.k, config.distance, normalized_training_points, normalized_testing_points)
+        normalized_training_points = get_normalized_datapoints(training, normalized_training_values, data_feature_map)
+        normalized_testing_points = get_normalized_datapoints(testing, normalized_testing_values, data_feature_map)
 
-    disp_color = get_format_color(model_accuracy)
-    accuracy = f"{(model_accuracy * 100):.2f}%"
+        model_accuracy = get_accuracy(config.k, config.distance, normalized_training_points, normalized_testing_points)
+        model_baseline_accuracy = get_baseline_accuracy(normalized_training_points, normalized_testing_points)
+
+
+    improvement = model_accuracy - model_baseline_accuracy
+    disp_color = get_format_color(improvement)
+    disp_interpret = get_improvement_interpretation(improvement)
+    baseline = f"{model_baseline_accuracy:.2%}"
+    accuracy = f"{model_accuracy:.2%}"
+    imp = f"+{improvement:.2%}"
+
+    content = "\n" + (
+        f"Baseline Accuracy: {baseline}\n"
+        f"Model Accuracy: {accuracy}\n"
+        f"[bold {disp_color}]Accuracy Improvement: {imp}[/bold {disp_color}]\n"
+        f"[bold {disp_color}]What this means: {disp_interpret}[/bold {disp_color}]"
+    ) + "\n"
     console.print(
         Panel(
-            Align.center(f"[bold {disp_color}] {accuracy} [/{disp_color}]"),
-            title="Model Accuracy",
+            Align.center(content),
+            title="Accuracy Metrics",
             border_style=f"{disp_color}"
         )
     )
