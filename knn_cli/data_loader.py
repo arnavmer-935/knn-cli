@@ -1,12 +1,13 @@
 from knn_cli.data_utils import Datapoint
 import csv
 
-def load_dataset(dataset: str) -> tuple[list[Datapoint], dict[str, int]]:
+def load_dataset(dataset: str, categorical_label: str) -> tuple[list[Datapoint], dict[str, int]]:
     """
     Parses an existing CSV file containing numeric feature values and a categorical label column.
     Assumes that the last column is the category and all preceding columns are numeric features.
     If the file is not found, prints an error message and returns empty results silently.
 
+    :param categorical_label: #TODO
     :param dataset: file path of the training dataset.
 
     :return: a tuple containing a list of Datapoint objects and a dictionary mapping
@@ -14,23 +15,32 @@ def load_dataset(dataset: str) -> tuple[list[Datapoint], dict[str, int]]:
     """
     datapoints = []
     feature_index_map = dict()
-    try:
-        with open(dataset, newline='') as file:
-            reader = csv.DictReader(file)
-            for i in range(len(reader.fieldnames) - 1):
-                feature_index_map[reader.fieldnames[i]] = i
+    with open(dataset, newline='') as file:
+        reader = csv.DictReader(file)
+        reader.fieldnames = [col.strip() for col in reader.fieldnames]
+        cat_idx = reader.fieldnames.index(categorical_label)
+        seq_idx = 0
+        for i in range(len(reader.fieldnames)):
+            if i != cat_idx:
+                feature_index_map[reader.fieldnames[i].strip()] = seq_idx
+                seq_idx += 1
 
-            for row in reader:
-                if not row:
-                    continue
+        for row in reader:
+            if not row:
+                continue
 
-                values = list(row.values())
-                feature_vals = [float(val.strip()) for val in values[:-1]]
-                category = values[-1].strip()
-                datapoint = Datapoint(tuple(feature_vals), category)
-                datapoints.append(datapoint)
+            values = list(row.values())
+            try:
+                feature_vals = [float(values[i].strip()) for i in range(len(values)) if i != cat_idx]
+            except ValueError:
+                raise ValueError("Dataset contains non-numeric values in feature columns.")
 
-    except FileNotFoundError:
-        print(f"Error: {dataset} does not exist.")
+            category = values[cat_idx].strip()
+            datapoint = Datapoint(tuple(feature_vals), category)
+            datapoints.append(datapoint)
 
     return datapoints, feature_index_map
+
+def get_column_names(dataset):
+    with open(dataset, newline='') as f:
+        return [col.strip() for col in csv.DictReader(f).fieldnames]

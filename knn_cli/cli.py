@@ -1,22 +1,22 @@
 import typer
-from typing import Annotated
 
 from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from knn_cli.data_loader import load_dataset
+from knn_cli.data_utils import get_valid_dist_metric, get_valid_plot_args, get_valid_tts_fraction, display_column_names
+from knn_cli.data_loader import load_dataset, get_column_names
 from knn_cli.knn import calculate_distances, get_classification, k_nearest_points
 from knn_cli.visualization import generate_plots
 
-from knn_cli.data_utils import (Distances,
+from knn_cli.data_utils import (
                                 get_column_values,
-                                validate_prediction_args,
-                                validate_dataset_args,
-                                get_valid_query_point, NormalizationMethods, KNNConfig, NORM_LABEL,
+                                NormalizationMethods, KNNConfig, NORM_LABEL,
                                 DISTANCE_LABEL, DescriptiveStats, get_format_color, Computation,
-                                get_improvement_interpretation
+                                get_improvement_interpretation, get_valid_dataset_path, get_valid_k,
+                                get_valid_categorical_label, get_normalization_requirement, get_model_pathway,
+                                get_query_input
                                 )
 
 from knn_cli.statistics import (mean_dataset,
@@ -77,21 +77,7 @@ def display_config(config: KNNConfig) -> None:
 
     cli_console.print(config_table, justify="center")
 
-def main(
-    dataset: str = typer.Argument("-d", help="a comma separated training data file."),
-    k: int = typer.Argument("-k", help="the number of nearest neighbors to be considered."),
-    query_data: Annotated[str, typer.Option("--p", help="the query data point's feature values separated by whitespace.")] = None,
-    distance: Annotated[Distances, typer.Option("--m", help = "the distance metric", case_sensitive = False)] = Distances.eucl,
-    tts: Annotated[float, typer.Option("--train-test-split", help="splits dataset into train and test sets based on the given fraction. "
-                                                                  "e.g. 0.2 uses an 80/20 split for training/testing respectively.")] = None,
-    normalize: Annotated[NormalizationMethods, typer.Option("--normalize", help="normalizes feature values using z-scores/min-max scaling.")] = None,
-    describe: Annotated[bool, typer.Option(help="display in the standard output descriptive statistics of the data")] = False,
-    plot: Annotated[bool, typer.Option(help="enables plotting mode")] = False,
-    x: Annotated[str, typer.Option(help="label for the x axis")] = None,
-    y: Annotated[str, typer.Option(help="label for the y axis")] = None,
-    z: Annotated[str, typer.Option(help="label for the z axis (used only in 3D plots")] = None,
-    confirm: Annotated[bool, typer.Option("--confirm", help="confirm arguments before running")] = False
-) -> None:
+def main() -> None:
 
     """
     The main entry point of the CLI. Responsible for parsing command line arguments,
@@ -102,48 +88,43 @@ def main(
     invalid file paths, out-of-range k values, query point dimension mismatches,
     and malformed plot configurations. Exits with code 1 on any validation failure.
 
-    :param dataset: file path of the training dataset.
-    :param k: number of nearest neighbors to be considered.
-    :param query_data: whitespace-separated feature values of the query point.
-    :param distance: the distance metric to use. Accepts eucl, manh, or cos. Defaults to eucl.
-    :param tts: the fraction required for train-test splitting and evaluating model accuracy.
-    :param describe: if True, displays a descriptive statistics table for the dataset.
-    :param plot: if True, enables scatter plot generation.
-    :param x: feature name to plot on the x-axis. Requires --plot.
-    :param y: feature name to plot on the y-axis. Requires --x.
-    :param z: feature name to plot on the z-axis. Produces a 3D plot. Requires --y.
-    :param confirm: if True, displays a configuration summary and prompts the user to proceed.
-    :param normalize: the normalization method to be used for scaling the data values.
-    must be either "zscore" or "minmax".
-
     :return: None
     """
 
     console = Console()
     try:
-        validate_prediction_args(dataset, k, normalize, tts)
-        query_point = get_valid_query_point(query_data) if query_data is not None else None
-        user_datapoints, feature_map = load_dataset(dataset)
-        validate_dataset_args(user_datapoints, feature_map, k, query_data, plot, x, y, z, tts)
+        dataset = get_valid_dataset_path()
+        user_dataset_columns = get_column_names(dataset)
 
-        categories = sorted({pt.category for pt in user_datapoints})
+        display_column_names(console, user_dataset_columns)
+        categorical_label = get_valid_categorical_label(user_dataset_columns)
 
-        user_config = KNNConfig(dataset, k, query_point, categories, distance, normalize, describe, plot, x, y, z, tts)
+        user_datapoints, feature_map = load_dataset(dataset, categorical_label)
 
-        if confirm:
-            console.rule("[bold cyan] Configuration Attributes")
-            display_config(user_config)
-
-            if not typer.confirm("Proceed?"):
-                raise typer.Exit()
+        k = get_valid_k(user_datapoints)
+        distance = get_valid_dist_metric()
 
         column_values = get_column_values(user_datapoints, feature_map)
         mean_of_data = mean_dataset(column_values)
         st_devs = standard_deviation_dataset(column_values)
         data_count, data_min, data_max = count_min_max(column_values)
 
+        normalize = get_normalization_requirement()
+
+        query_point = None
+        plot, x, y, z = None, None, None, None
+        tts = None
         normalized_values = None
         normalized_pt = None
+
+        pathway = get_model_pathway()
+        if pathway == "classification":
+            query_point = get_query_input(feature_map)
+            plot, x, y, z = get_valid_plot_args(feature_map)
+            tts = None
+
+        elif pathway == "evaluation":
+            tts = get_valid_tts_fraction()
 
         if normalize == NormalizationMethods.zscore:
             mean_std_map = get_mean_std_map(mean_of_data, st_devs)
@@ -159,6 +140,13 @@ def main(
         if normalized_values is not None:
             normalized_user_points = get_normalized_datapoints(user_datapoints, normalized_values, feature_map)
 
+        confirm = typer.confirm("Generate configuration summary for confirmation?")
+        desc = typer.confirm("Generate descriptive statistics for dataset?")
+
+        categories = sorted({pt.category for pt in user_datapoints})
+
+        user_config = KNNConfig(dataset, k, query_point, categories, distance, normalize, desc, plot, x, y, z, tts)
+
         user_computation_config = Computation(
             user_datapoints,
             query_point,
@@ -173,7 +161,14 @@ def main(
             data_max
         )
 
-        if describe:
+        if confirm:
+            console.rule("[bold cyan] Configuration Attributes")
+            display_config(user_config)
+
+            if not typer.confirm("Proceed?"):
+                raise typer.Exit()
+
+        if desc:
             console.rule("[bold cyan]Descriptive Statistics")
             median_of_data = median_dataset(column_values)
             q1, q3 = quartile_values_dataset(column_values)
@@ -190,10 +185,9 @@ def main(
 
             generate_desc_statistics(stats_config)
 
-        if tts is None:
+        if pathway == "classification":
             classification_and_analysis(console, user_config, user_computation_config)
-
-        else:
+        elif pathway == "evaluation":
             evaluation(console, user_config, user_computation_config)
 
     except ValueError as e:

@@ -3,6 +3,10 @@ from dataclasses import dataclass
 from enum import Enum
 from re import split
 
+import typer
+from rich.console import Console
+from rich.table import Table
+
 @dataclass
 class Datapoint:
     features: tuple[float,...]
@@ -104,103 +108,71 @@ def median(arr: list[float]) -> float:
     else:
         return arr[n//2]
 
-def validate_prediction_args(dataset: str, k: int, normalize: str, tts: float) -> None:
-    """
-    Performs initial validation on the dataset path, the k value, and the normalization method
-    before the dataset is loaded.
+def get_valid_dataset_path() -> str:
+    while True:
+        path = typer.prompt("Enter dataset path")
+        if os.path.isfile(path):
+            break
+        typer.echo(f"Dataset file: \"{path}\" is invalid.")
 
-    Raises ValueError if the dataset path does not point to an existing file, if k is zero or negative,
-    or if the normalization method is not "zscore" or "minmax"
+    return path
 
-    :param dataset: file path of the training dataset.
-    :param k: number of nearest neighbors to be considered.
-    :param normalize: the method for feature normalization.
-    :param tts: the fraction for train-test splitting in the dataset
+def get_valid_k(datapoints: list[Datapoint]) -> int:
+    n = len(datapoints)
+    while True:
+        k_value = typer.prompt("Enter the value of k", type=int)
+        if 0 < k_value < n:
+            break
+        typer.echo(f"The value of k ({k_value}) must be positive, and not exceed the size of the dataset ({n}).")
 
-    :return: None
-    """
-    if not os.path.isfile(dataset):
-        raise ValueError(f"Dataset file: {dataset} is invalid.")
+    return k_value
 
-    if k <= 0:
-        raise ValueError("The value of k must be positive.")
 
-    if normalize is not None and not any(normalize == method for method in NormalizationMethods):
-        raise ValueError("Invalid normalization method. Expected 'zscore' or 'minmax'.")
+def display_column_names(console: Console, columns: list[str]) -> None:
+    table = Table(title="Available Columns")
 
-    if tts is not None and not (0.0 < tts < 1.0):
-        raise ValueError("Train-Test splitting fraction must be a floating point value between 0 and 1 (both exclusive).")
+    cols_per_row = 4
+    for _ in range(cols_per_row):
+        table.add_column("")
 
-def validate_dataset_args(datapoints: list[Datapoint], feature_map: dict[str, int],
-                          k: int, query_data: str, plot: bool, x: str, y: str, z: str,
-                          tts: float) -> None:
-    """
-    Performs validation on the dataset and argument configuration after the dataset is loaded.
+    for i in range(0, len(columns), cols_per_row):
+        chunk = columns[i:i + cols_per_row]
+        chunk += [""] * (cols_per_row - len(chunk))
+        table.add_row(*chunk)
+        table.add_row(*[""] * cols_per_row)  # empty spacer row
 
-    Raises ValueError in the following cases:
-    - k exceeds the number of datapoints in the dataset
-    - the feature map is None or empty
-    - the dataset contains fewer than 3 columns
-    - the query point dimensions do not match the number of feature columns
-    - axis arguments are provided without the --plot flag
-    - z-axis is specified without a y-axis
-    - y-axis is specified without an x-axis
-    - any axis feature name does not exist in the dataset
-    - user tries to perform query data classification and train-test splitting in the same command
+    console.print(table)
 
-    :param datapoints: list of Datapoint objects representing the training data.
-    :param feature_map: dictionary mapping each feature column name to its 0-based index.
-    :param k: number of nearest neighbors to be considered.
-    :param query_data: whitespace-separated feature values of the query point as a raw string.
-    :param plot: boolean flag indicating whether plotting mode is enabled.
-    :param x: feature name assigned to the x-axis, or None if not specified.
-    :param y: feature name assigned to the y-axis, or None if not specified.
-    :param z: feature name assigned to the z-axis, or None if not specified.
-    :param tts: the train-test split fraction for the dataset.
+def get_valid_categorical_label(columns: list[str]):
+    temp_set = set(columns)
+    while True:
+        label = typer.prompt("Enter the column name of the categorical variable")
+        if label in temp_set:
+            break
+        typer.echo(f"Column name {label} not found in dataset.")
 
-    :return: None
-    """
-    if k > len(datapoints):
-        raise ValueError(f"Value of k ({k}) cannot exceed the size of dataset ({len(datapoints)}).")
+    return label
 
-    if feature_map is None:
-        raise ValueError("Dataset is empty or malformed.")
+def get_normalization_requirement():
+    normalize_method = None
+    wants_normalization = typer.confirm("Enable feature normalization?")
+    if wants_normalization:
+        while True:
+            normalize_method = typer.prompt("Enter normalization method (zscore/minmax)")
+            if normalize_method.lower() in {"zscore", "minmax"}:
+                break
+            typer.echo("Normalization method must be either \"zscore\" or \"minmax\".")
 
-    if len(feature_map) < 2:
-        raise ValueError("Insufficient columns in dataset file. Expected at least 2 columns.")
+    return NormalizationMethods(normalize_method.lower()) if normalize_method else None
 
-    if plot and len(feature_map) < 2:
-        raise ValueError("Plotting requires at least 2 feature columns in the dataset.")
+def get_model_pathway():
+    while True:
+        pathway = typer.prompt("Enter model usage pathway (classification/evaluation)")
+        if pathway.lower() in {"classification", "evaluation"}:
+            break
+        typer.echo("Model pathway must be either \"classification\" or \"evaluation\".")
 
-    if query_data is not None:
-        if len(get_valid_query_point(query_data)) != len(feature_map):
-            raise ValueError("Number of feature columns in dataset does not match the dimensions of query point.")
-
-    if not plot and any(axis is not None for axis in (x, y, z)):
-        raise ValueError("Axis arguments (--x, --y, --z) require the --plot flag.")
-
-    if z is not None and y is None:
-        raise ValueError("z-axis requires a y-axis feature.")
-
-    if y is not None and x is None:
-        raise ValueError("y-axis requires an x-axis feature.")
-
-    if tts is not None:
-        if query_data is not None:
-            raise ValueError("Query data classification and model evaluation cannot be conducted simultaneously. "
-                             "Requires a separate command.")
-
-        if plot:
-            raise ValueError("Plotting cannot be done simultaneously with train-test splitting. "
-                             "Requires a separate command.")
-
-        if any(axis is not None for axis in (x, y, z)):
-            raise ValueError("Axis labels cannot be used in combination with a train-test split."
-                             "Requires a separate command.")
-
-    for axis, feature in {"x": x, "y": y, "z": z}.items():
-        if feature is not None and feature not in feature_map:
-            raise ValueError(f"{axis}-axis feature \"{feature}\" does not exist in dataset.")
+    return pathway.strip().lower()
 
 def get_valid_query_point(query_point: str) -> list[float]:
     """
@@ -227,6 +199,64 @@ def get_valid_query_point(query_point: str) -> list[float]:
             raise ValueError("Query datapoint contains non-numerical data.")
 
     return result
+
+def get_query_input(feature_index_map):
+    values = []
+    for feature in feature_index_map:
+        val = typer.prompt(f"Enter feature value for \"{feature}\"", type = float)
+        values.append(val)
+
+    return values
+
+def get_valid_dist_metric():
+    metrics = {"eucl", "manh", "cos"}
+
+    while True:
+        metric = typer.prompt("Enter distance metric for algorithm (eucl/manh/cos)")
+        if metric in metrics:
+            break
+        typer.echo("Distance metric must be either \"eucl\", \"manh\", or \"cos\"")
+
+    return Distances(metric.lower())
+
+def get_valid_plot_args(feature_index_map):
+    original = {feature.lower() : feature for feature in feature_index_map}
+    plot = typer.confirm("Enable plotting?")
+    x, y, z = None, None, None
+    if plot:
+        while True:
+            x = typer.prompt("Enter feature column for x-axis")
+            if x.lower() in original:
+                break
+            typer.echo(f"Feature column \"{x}\" does not exist in dataset.")
+
+        while True:
+            y = typer.prompt("Enter feature column for y-axis")
+            if y.lower() in original:
+                break
+            typer.echo(f"Feature column \"{y}\" does not exist in dataset.")
+
+        wants_3d_plot = typer.confirm("Enable 3D plotting?")
+        if wants_3d_plot:
+            while True:
+                z = typer.prompt("Enter feature column for z-axis")
+                if z.lower() in original:
+                    break
+                typer.echo(f"Feature column \"{z}\" does not exist in dataset.")
+
+    if not plot:
+        return plot, None, None, None
+    else:
+        return plot, original[x.lower()], original[y.lower()], original[z.lower()] if z is not None else None
+
+def get_valid_tts_fraction():
+    while True:
+        frac = typer.prompt("Enter train-test-split fraction", type=float)
+        if 0 < frac < 1:
+            break
+        typer.echo("Train test split fraction must lie in the open interval (0, 1)")
+
+    return frac
 
 def get_format_color(improvement: float) -> str:
     """
