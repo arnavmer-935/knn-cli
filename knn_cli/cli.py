@@ -39,7 +39,7 @@ def display_config(config: KNNConfig) -> None:
     Called only when the --confirm flag is set, giving the user a chance to review
     all arguments prior to running the classification algorithm.
 
-    :param config: #TODO
+    :param config: the instance of the dataclass which stores all command line argument inputs from the user
 
     :return: None
     """
@@ -202,7 +202,22 @@ def main(
 
 def classification_and_analysis(console: Console, knn_config: KNNConfig, computation: Computation):
     """
-    should contain plot generation, descriptive stats, classification logic
+    Performs KNN classification for a query point and displays the results along with dataset metadata.
+
+    This function computes distances between the query point and dataset points, selects the k-nearest
+    neighbors, and determines the predicted class. If normalized data is available, it uses the normalized
+    values; otherwise, it falls back to the original data.
+
+    The prediction is displayed using a formatted console panel. Additionally, the function prints a
+    summary of the dataset, including the number of features and available categories. Optionally,
+    visualization plots are generated if enabled in the configuration.
+
+    :param console: Rich Console object used for formatted output display.
+    :param knn_config: Configuration object containing KNN parameters such as k, distance metric,
+                       query point, categories, and plotting preferences.
+    :param computation: an instance of the Computation dataclass, containing datapoints, normalized
+                        datapoints (if not None), query point (normalized if flag entered by user), and feature mappings.
+
     :return: None
     """
     requirements = computation.normalized_query, computation.normalized_datapoints
@@ -248,8 +263,25 @@ def classification_and_analysis(console: Console, knn_config: KNNConfig, computa
 
 def evaluation(console: Console, config: KNNConfig, computation: Computation):
     """
-    should contain train, test splitting, eval metrics. Cannot be invoked simultaneously with
-    classification_and_analysis.
+    Performs model evaluation using a train-test split and displays performance metrics.
+
+    This function splits the dataset into training and testing sets, computes baseline accuracy,
+    and evaluates the KNN model's accuracy. If normalization is enabled, the function applies the
+    specified normalization method (z-score or min-max) using statistics derived from the training set,
+    and evaluates the model on normalized data.
+
+    The function then calculates the improvement of the model over the baseline and displays the
+    results in a formatted console panel, including an interpretation of the improvement.
+
+    Note:
+    This function is mutually exclusive with classification_and_analysis and should not be invoked
+    simultaneously.
+
+    :param console: Rich Console object used for formatted output display.
+    :param config: Configuration object containing KNN parameters such as k, distance metric,
+                   train-test split ratio, normalization method, and other evaluation settings.
+    :param computation: Object containing dataset-related data, including datapoints and feature mappings.
+
     :return: None
     """
     data_feature_map = computation.feature_map
@@ -295,7 +327,7 @@ def evaluation(console: Console, config: KNNConfig, computation: Computation):
     disp_interpret = get_improvement_interpretation(improvement)
     baseline = f"{model_baseline_accuracy:.2%}"
     accuracy = f"{model_accuracy:.2%}"
-    imp = f"+{improvement:.2%}"
+    imp = f"{improvement:+.2%}"
 
     content = "\n" + (
         f"Baseline Accuracy: {baseline}\n"

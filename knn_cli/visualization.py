@@ -1,4 +1,4 @@
-from random import choice
+from random import sample
 from matplotlib import pyplot as plt
 from knn_cli.data_utils import Datapoint
 
@@ -105,15 +105,5 @@ def map_colors_to_categories(groups: dict[str, list[tuple[float, float, float]]]
     :param groups: dictionary mapping each category name to its list of coordinate tuples.
     :return: dictionary mapping each assigned color to its corresponding category name.
     """
-    used_colors = set()
-    colors = []
-
-    for _ in range(len(groups)):
-        chosen = choice(COLOR_PALETTE)
-        while chosen in used_colors:
-            chosen = choice(COLOR_PALETTE)
-
-        colors.append(chosen)
-        used_colors.add(chosen)
-
+    colors = sample(COLOR_PALETTE, len(groups))
     return dict(zip(colors, groups.keys()))

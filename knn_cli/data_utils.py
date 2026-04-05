@@ -104,18 +104,6 @@ def median(arr: list[float]) -> float:
     else:
         return arr[n//2]
 
-def get_categories(dataset: str) -> list[str]:
-    """
-    Extracts the unique category values present in the dataset.
-
-    :param dataset: file path of the training dataset.
-
-    :return: list of unique category values found in the last column of the dataset.
-    """
-    with open(dataset) as f:
-        ls = list(set([l.strip().split(",")[-1] for l in f.readlines()]))
-        return ls
-
 def validate_prediction_args(dataset: str, k: int, normalize: str, tts: float) -> None:
     """
     Performs initial validation on the dataset path, the k value, and the normalization method
@@ -241,6 +229,15 @@ def get_valid_query_point(query_point: str) -> list[float]:
     return result
 
 def get_format_color(improvement: float) -> str:
+    """
+    Returns a Rich-compatible color string based on the magnitude of the
+    accuracy improvement over the baseline.
+
+    :param improvement: the difference between model accuracy and baseline accuracy.
+
+    :return: a color string — "red" for negative, "yellow" for negligible,
+    "cyan" for modest, and "green" for strong improvement.
+    """
     if improvement < 0:
         return "red"
 
@@ -254,7 +251,14 @@ def get_format_color(improvement: float) -> str:
         return "green"
 
 def get_improvement_interpretation(improvement: float) -> str:
+    """
+    Returns a human-readable interpretation of the model's accuracy improvement
+    over the baseline for display in the evaluation output panel.
 
+    :param improvement: the difference between model accuracy and baseline accuracy.
+
+    :return: a string describing the significance of the improvement.
+    """
     if improvement < 0:
         return "Model accuracy is worse than baseline accuracy."
     elif improvement < 0.02:

@@ -12,7 +12,7 @@ def generate_desc_statistics(stats_config: DescriptiveStats) -> None:
     The table does not contain the categorical values (dependent variable) when 
     descriptive statistics are being reported.
      
-    :param stats_config: #TODO
+    :param stats_config: The instance of a dataclass bundling all the values of the descriptive statistics
     
     :return: None
     """
