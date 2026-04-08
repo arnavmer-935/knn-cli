@@ -25,7 +25,7 @@ Interactive command-line tool for K-Nearest Neighbors (KNN) classification and e
 ## Usage
 
 ```bash
-  knn-cli run
+  knn-cli
 ```
 
 Follow the interactive prompts to:

@@ -16,7 +16,7 @@ def train_test_split(datapoints: list[Datapoint], fraction: float) -> tuple[list
     set would have fewer than 2 datapoints.
 
     :param datapoints: list of Datapoint objects to split.
-    :param fraction: the proportion of example_datasets to use for testing. Must be between 0 and 1 exclusive.
+    :param fraction: the proportion of data to use for testing. Must be between 0 and 1 exclusive.
 
     :return: a tuple of (training, testing) lists of Datapoint objects.
     """
@@ -28,11 +28,11 @@ def train_test_split(datapoints: list[Datapoint], fraction: float) -> tuple[list
         raise ValueError("Fraction is too small for conducting a meaningful train-test split.")
 
     if testing_size >= len(copied_data):
-        raise ValueError("Testing split fraction is too large and leaves no meaningful training example_datasets.")
+        raise ValueError("Testing split fraction is too large and leaves no meaningful training data.")
 
     training_size = len(copied_data) - testing_size
     if training_size < 2:
-        raise ValueError("Testing split fraction is too large and leaves no meaningful training example_datasets.")
+        raise ValueError("Testing split fraction is too large and leaves no meaningful training data.")
 
     testing_data = copied_data[training_size:]
     training_data = copied_data[:training_size]
@@ -44,7 +44,7 @@ def get_accuracy(k: int, distance: str, training_data: list[Datapoint], testing_
     Evaluates the KNN model's classification accuracy on the testing set.
 
     For each point in the testing set, runs the full KNN pipeline against the
-    training example_datasets and compares the predicted category to the actual category.
+    training data and compares the predicted category to the actual category.
 
     :param k: number of nearest neighbors to consider.
     :param distance: the distance metric to use. Accepts 'eucl', 'manh', or 'cos'.

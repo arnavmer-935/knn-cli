@@ -220,8 +220,8 @@ def classification_and_analysis(console: Console, knn_config: KNNConfig, computa
     Performs KNN classification for a query point and displays the results along with dataset metadata.
 
     This function computes distances between the query point and dataset points, selects the k-nearest
-    neighbors, and determines the predicted class. If normalized example_datasets is available, it uses the normalized
-    values; otherwise, it falls back to the original example_datasets.
+    neighbors, and determines the predicted class. If normalized data is available, it uses the normalized
+    values; otherwise, it falls back to the original data.
 
     The prediction is displayed using a formatted console panel. Additionally, the function prints a
     summary of the dataset, including the number of features and available categories. Optionally,
@@ -283,7 +283,7 @@ def evaluation(console: Console, config: KNNConfig, computation: Computation):
     This function splits the dataset into training and testing sets, computes baseline accuracy,
     and evaluates the KNN model's accuracy. If normalization is enabled, the function applies the
     specified normalization method (z-score or min-max) using statistics derived from the training set,
-    and evaluates the model on normalized example_datasets.
+    and evaluates the model on normalized data.
 
     The function then calculates the improvement of the model over the baseline and displays the
     results in a formatted console panel, including an interpretation of the improvement.
@@ -295,7 +295,7 @@ def evaluation(console: Console, config: KNNConfig, computation: Computation):
     :param console: Rich Console object used for formatted output display.
     :param config: Configuration object containing KNN parameters such as k, distance metric,
                    train-test split ratio, normalization method, and other evaluation settings.
-    :param computation: Object containing dataset-related example_datasets, including datapoints and feature mappings.
+    :param computation: Object containing dataset-related data, including datapoints and feature mappings.
 
     :return: None
     """

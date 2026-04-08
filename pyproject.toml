@@ -13,4 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-knn-cli = "knn_cli.main:app"
+knn-cli = "knn_cli.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["knn_cli"]

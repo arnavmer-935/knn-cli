@@ -6,7 +6,7 @@ from knn_cli.cli import main
 app = typer.Typer()
 app.command()(main)
 
-IRIS = "example_datasets/iris.example_datasets"
+IRIS = "data/iris.data"
 IRIS_QUERY = "5.1 3.5 1.4 0.2"
 IRIS_CATEGORIES = {"Iris-setosa", "Iris-versicolor", "Iris-virginica"}
 IRIS_COLUMNS = ["sepal_length", "sepal_width", "petal_length", "petal_width"]
@@ -21,7 +21,7 @@ class TestCLIErrorCases(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
 
     def test_nonexistent_dataset_exits_with_error(self):
-        result = self.runner.invoke(app, ["example_datasets/fake.example_datasets", "5", "--p", IRIS_QUERY])
+        result = self.runner.invoke(app, ["data/fake.data", "5", "--p", IRIS_QUERY])
         self.assertEqual(result.exit_code, 1)
 
     def test_k_zero_exits_with_error(self):

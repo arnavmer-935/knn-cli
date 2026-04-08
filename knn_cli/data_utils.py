@@ -80,7 +80,7 @@ def get_column_values(datapoints: list[Datapoint], feature_map: dict[str, int]) 
     """
     Extracts all values for each feature column across the dataset.
 
-    :param datapoints: list of Datapoint objects representing the training example_datasets.
+    :param datapoints: list of Datapoint objects representing the training data.
     :param feature_map: dictionary mapping each feature column name to its 0-based index.
 
     :return: dictionary mapping each feature column name to a list of all its values
@@ -280,7 +280,7 @@ def get_valid_query_point(query_point: str) -> list[float]:
             numeric = float(val)
             result.append(numeric)
         except ValueError:
-            raise ValueError("Query datapoint contains non-numerical example_datasets.")
+            raise ValueError("Query datapoint contains non-numerical data.")
 
     return result
 
@@ -473,7 +473,7 @@ def landing_message(console: Console):
             "[bold white]Pathway[/bold white]\n"
             "[dim]classification - Predict a query point  |  evaluation - Measure model accuracy[/dim]\n\n"
             "[bold white]Train-Test Split[/bold white]\n"
-            "[dim]Fraction of example_datasets used for testing e.g. 0.2 = 80/20 split[/dim]\n\n"
+            "[dim]Fraction of data used for testing e.g. 0.2 = 80/20 split[/dim]\n\n"
             "[dim]Press Ctrl+C to exit at any time[/dim]"
         ),
         border_style="cyan",

@@ -11,7 +11,7 @@ def calculate_distances(feature: list[float], datapoints: list[Datapoint],
     Defaults to Euclidean distance if an unrecognized metric string is provided.
 
     :param feature: the parsed query point as a list of floats.
-    :param datapoints: list of Datapoint objects representing the training example_datasets.
+    :param datapoints: list of Datapoint objects representing the training data.
     :param distance: the distance metric to use. Accepts 'eucl', 'manh', or 'cos'.
     Defaults to 'eucl'.
 
