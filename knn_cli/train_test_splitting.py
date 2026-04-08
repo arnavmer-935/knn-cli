@@ -59,7 +59,7 @@ def get_accuracy(k: int, distance: str, training_data: list[Datapoint], testing_
         nearest_neighbors = k_nearest_points(k, distances)
         algo_prediction = get_classification(nearest_neighbors)
 
-        if algo_prediction == test_point.category: #found accurate classification
+        if algo_prediction == test_point.category:
             correct_preds += 1
 
     return correct_preds / len(testing_data)
@@ -80,7 +80,6 @@ def get_baseline_accuracy(training: list[Datapoint], testing: list[Datapoint]):
     most_frequent_category = counter.most_common(1)[0][0]
 
     req_count = 0
-    #for each point in testing data, if its category is the most frequent category (mfc), increment count
     for point in testing:
         if point.category == most_frequent_category:
             req_count += 1

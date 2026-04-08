@@ -4,7 +4,9 @@ from enum import Enum
 from re import split
 
 import typer
+from rich.align import Align
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Table
 
 @dataclass
@@ -72,6 +74,8 @@ class Computation:
     min_dict: dict
     max_dict: dict
 
+ERR_COLOR = typer.colors.RED
+
 def get_column_values(datapoints: list[Datapoint], feature_map: dict[str, int]) -> dict[str, list[float]]:
     """
     Extracts all values for each feature column across the dataset.
@@ -113,7 +117,7 @@ def get_valid_dataset_path() -> str:
         path = typer.prompt("Enter dataset path")
         if os.path.isfile(path):
             break
-        typer.echo(f"Dataset file: \"{path}\" is invalid.")
+        typer.echo(typer.style(f"Dataset file: \"{path}\" is invalid.", fg=ERR_COLOR))
 
     return path
 
@@ -122,11 +126,12 @@ def get_valid_k(datapoints: list[Datapoint]) -> int:
     while True:
         k_value = typer.prompt("Enter the value of k", type=int)
         if 0 < k_value < n:
+            typer.echo(" ")
             break
-        typer.echo(f"The value of k ({k_value}) must be positive, and not exceed the size of the dataset ({n}).")
+
+        typer.echo(typer.style(f"The value of k ({k_value}) must be positive, and not exceed the size of the dataset ({n}).", fg=ERR_COLOR))
 
     return k_value
-
 
 def display_column_names(console: Console, columns: list[str]) -> None:
     table = Table(title="Available Columns")
@@ -139,17 +144,19 @@ def display_column_names(console: Console, columns: list[str]) -> None:
         chunk = columns[i:i + cols_per_row]
         chunk += [""] * (cols_per_row - len(chunk))
         table.add_row(*chunk)
-        table.add_row(*[""] * cols_per_row)  # empty spacer row
+        table.add_row(*[""] * cols_per_row)
 
     console.print(table)
+    typer.echo(" ")
 
 def get_valid_categorical_label(columns: list[str]):
     temp_set = set(columns)
     while True:
         label = typer.prompt("Enter the column name of the categorical variable")
         if label in temp_set:
+            typer.echo(" ")
             break
-        typer.echo(f"Column name {label} not found in dataset.")
+        typer.echo(typer.style(f"Column name \"{label}\" not found in dataset.", fg=ERR_COLOR))
 
     return label
 
@@ -160,8 +167,9 @@ def get_normalization_requirement():
         while True:
             normalize_method = typer.prompt("Enter normalization method (zscore/minmax)")
             if normalize_method.lower() in {"zscore", "minmax"}:
+                typer.echo(" ")
                 break
-            typer.echo("Normalization method must be either \"zscore\" or \"minmax\".")
+            typer.echo(typer.style("Normalization method must be either \"zscore\" or \"minmax\".", fg=ERR_COLOR))
 
     return NormalizationMethods(normalize_method.lower()) if normalize_method else None
 
@@ -169,8 +177,10 @@ def get_model_pathway():
     while True:
         pathway = typer.prompt("Enter model usage pathway (classification/evaluation)")
         if pathway.lower() in {"classification", "evaluation"}:
+            typer.echo(" ")
             break
-        typer.echo("Model pathway must be either \"classification\" or \"evaluation\".")
+
+        typer.echo(typer.style("Model pathway must be either \"classification\" or \"evaluation\".", fg=ERR_COLOR))
 
     return pathway.strip().lower()
 
@@ -205,17 +215,18 @@ def get_query_input(feature_index_map):
     for feature in feature_index_map:
         val = typer.prompt(f"Enter feature value for \"{feature}\"", type = float)
         values.append(val)
+        typer.echo(" ")
 
     return values
 
 def get_valid_dist_metric():
     metrics = {"eucl", "manh", "cos"}
-
     while True:
         metric = typer.prompt("Enter distance metric for algorithm (eucl/manh/cos)")
         if metric in metrics:
+            typer.echo(" ")
             break
-        typer.echo("Distance metric must be either \"eucl\", \"manh\", or \"cos\"")
+        typer.echo(typer.style("Distance metric must be either \"eucl\", \"manh\", or \"cos\"", fg=ERR_COLOR))
 
     return Distances(metric.lower())
 
@@ -227,22 +238,25 @@ def get_valid_plot_args(feature_index_map):
         while True:
             x = typer.prompt("Enter feature column for x-axis")
             if x.lower() in original:
+                typer.echo(" ")
                 break
-            typer.echo(f"Feature column \"{x}\" does not exist in dataset.")
+            typer.echo(typer.style(f"Feature column \"{x}\" does not exist in dataset.", fg=ERR_COLOR))
 
         while True:
             y = typer.prompt("Enter feature column for y-axis")
             if y.lower() in original:
+                typer.echo(" ")
                 break
-            typer.echo(f"Feature column \"{y}\" does not exist in dataset.")
+            typer.echo(typer.style(f"Feature column \"{y}\" does not exist in dataset.", fg=ERR_COLOR))
 
         wants_3d_plot = typer.confirm("Enable 3D plotting?")
         if wants_3d_plot:
             while True:
                 z = typer.prompt("Enter feature column for z-axis")
                 if z.lower() in original:
+                    typer.echo(" ")
                     break
-                typer.echo(f"Feature column \"{z}\" does not exist in dataset.")
+                typer.echo(typer.style(f"Feature column \"{z}\" does not exist in dataset.", fg=ERR_COLOR))
 
     if not plot:
         return plot, None, None, None
@@ -253,8 +267,9 @@ def get_valid_tts_fraction():
     while True:
         frac = typer.prompt("Enter train-test-split fraction", type=float)
         if 0 < frac < 1:
+            typer.echo(" ")
             break
-        typer.echo("Train test split fraction must lie in the open interval (0, 1)")
+        typer.echo(typer.style("Train test split fraction must lie in the open interval (0, 1)", fg=ERR_COLOR))
 
     return frac
 
@@ -300,6 +315,28 @@ def get_improvement_interpretation(improvement: float) -> str:
     else:
         return "Model has produced a very strong improvement (please verify dataset)."
 
+def landing_message(console: Console):
+    console.print(Panel(
+        Align.center(
+            "[bold cyan]KNN Command Line Tool[/bold cyan]\n"
+            "[dim]Real World Data Analysis[/dim]\n\n"
+            "[bold white]Dataset Path[/bold white]\n"
+            "[dim]Path to a CSV file with a header row and at least 2 columns[/dim]\n\n"
+            "[bold white]k[/bold white]\n"
+            "[dim]Number of nearest neighbors to consider. Must be positive and less than dataset size[/dim]\n\n"
+            "[bold white]Distance Metric[/bold white]\n"
+            "[dim]eucl - Euclidean  |  manh - Manhattan  |  cos - Cosine[/dim]\n\n"
+            "[bold white]Normalization[/bold white]\n"
+            "[dim]zscore - Z-score standardization  |  minmax - Min-max scaling[/dim]\n\n"
+            "[bold white]Pathway[/bold white]\n"
+            "[dim]classification - Predict a query point  |  evaluation - Measure model accuracy[/dim]\n\n"
+            "[bold white]Train-Test Split[/bold white]\n"
+            "[dim]Fraction of data used for testing e.g. 0.2 = 80/20 split[/dim]\n\n"
+            "[dim]Press Ctrl+C to exit at any time[/dim]"
+        ),
+        border_style="cyan",
+        padding=(1, 4)
+    ))
 
 
 

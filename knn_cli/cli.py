@@ -5,7 +5,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from knn_cli.data_utils import get_valid_dist_metric, get_valid_plot_args, get_valid_tts_fraction, display_column_names
+from knn_cli.data_utils import get_valid_dist_metric, get_valid_plot_args, get_valid_tts_fraction, display_column_names, \
+    ERR_COLOR
 from knn_cli.data_loader import load_dataset, get_column_names
 from knn_cli.knn import calculate_distances, get_classification, k_nearest_points
 from knn_cli.visualization import generate_plots
@@ -16,7 +17,8 @@ from knn_cli.data_utils import (
                                 DISTANCE_LABEL, DescriptiveStats, get_format_color, Computation,
                                 get_improvement_interpretation, get_valid_dataset_path, get_valid_k,
                                 get_valid_categorical_label, get_normalization_requirement, get_model_pathway,
-                                get_query_input
+                                get_query_input,
+                                landing_message
                                 )
 
 from knn_cli.statistics import (mean_dataset,
@@ -54,6 +56,9 @@ def display_config(config: KNNConfig) -> None:
     nm = "N/A" if config.normalize is None else NORM_LABEL[config.normalize]
     query = "N/A" if config.query_pt is None else config.query_pt
 
+    enabled_plot = "Yes" if config.plot else "No"
+    desc_stats = "Yes" if config.describe else "No"
+
     tts_msg = None
     if config.tts is None:
         tts_msg = "N/A"
@@ -69,8 +74,8 @@ def display_config(config: KNNConfig) -> None:
     config_table.add_row("Distance Metric", DISTANCE_LABEL[config.distance])
     config_table.add_row("Train-Test split", tts_msg)
     config_table.add_row("Normalization Method", nm)
-    config_table.add_row("Enable Descriptive Statistics?", str(config.describe))
-    config_table.add_row("Enable Plotting?", str(config.plot))
+    config_table.add_row("Enable Descriptive Statistics?", desc_stats)
+    config_table.add_row("Enable Plotting?", enabled_plot)
     config_table.add_row("Plot Label for x-axis", x)
     config_table.add_row("Plot Label for y-axis", y)
     config_table.add_row("Plot Label for z-axis", z)
@@ -93,13 +98,24 @@ def main() -> None:
 
     console = Console()
     try:
+        landing_message(console)
+
+        console.rule("[bold cyan] Dataset Configuration")
         dataset = get_valid_dataset_path()
         user_dataset_columns = get_column_names(dataset)
 
         display_column_names(console, user_dataset_columns)
-        categorical_label = get_valid_categorical_label(user_dataset_columns)
 
-        user_datapoints, feature_map = load_dataset(dataset, categorical_label)
+        while True:
+            categorical_label = get_valid_categorical_label(user_dataset_columns)
+            try:
+                user_datapoints, feature_map = load_dataset(dataset, categorical_label)
+                break
+            except ValueError:
+                typer.echo(typer.style(
+                    "Dataset contains non-numeric feature values with this label column. Please choose a different one.",
+                    fg=ERR_COLOR
+                ))
 
         k = get_valid_k(user_datapoints)
         distance = get_valid_dist_metric()
@@ -140,7 +156,9 @@ def main() -> None:
         if normalized_values is not None:
             normalized_user_points = get_normalized_datapoints(user_datapoints, normalized_values, feature_map)
 
+        typer.echo(" ")
         confirm = typer.confirm("Generate configuration summary for confirmation?")
+        typer.echo(" ")
         desc = typer.confirm("Generate descriptive statistics for dataset?")
 
         categories = sorted({pt.category for pt in user_datapoints})
