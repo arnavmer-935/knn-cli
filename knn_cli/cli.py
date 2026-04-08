@@ -160,7 +160,6 @@ def main() -> None:
         if normalized_values is not None:
             normalized_user_points = get_normalized_datapoints(user_datapoints, normalized_values, feature_map)
 
-        typer.echo(" ")
         confirm = typer.confirm("Generate configuration summary for confirmation?")
         typer.echo(" ")
         desc = typer.confirm("Generate descriptive statistics for dataset?")
@@ -306,8 +305,6 @@ def evaluation(console: Console, config: KNNConfig, computation: Computation):
 
     normalized_training_values = None
     normalized_testing_values = None
-    model_baseline_accuracy = None
-    model_accuracy = None
 
     if config.normalize is None:
         model_baseline_accuracy = get_baseline_accuracy(training, testing)
@@ -359,5 +356,11 @@ def evaluation(console: Console, config: KNNConfig, computation: Computation):
         )
     )
 
+app = typer.Typer()
+
+@app.command()
+def run():
+    main()
+
 if __name__ == '__main__':
-    typer.run(main)
+    app()

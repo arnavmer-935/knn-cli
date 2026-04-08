@@ -1,0 +1,16 @@
+[project]
+name = "knn-cli"
+version = "1.0.0"
+description = "Interactive KNN command line tool for classification and evaluation"
+authors = [{ name="Arnav Vikram Merani" }]
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "typer",
+    "rich",
+    "matplotlib"
+]
+
+[project.scripts]
+knn-cli = "knn_cli.main:app"
