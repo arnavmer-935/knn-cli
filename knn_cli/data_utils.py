@@ -80,7 +80,7 @@ def get_column_values(datapoints: list[Datapoint], feature_map: dict[str, int]) 
     """
     Extracts all values for each feature column across the dataset.
 
-    :param datapoints: list of Datapoint objects representing the training data.
+    :param datapoints: list of Datapoint objects representing the training example_datasets.
     :param feature_map: dictionary mapping each feature column name to its 0-based index.
 
     :return: dictionary mapping each feature column name to a list of all its values
@@ -113,6 +113,16 @@ def median(arr: list[float]) -> float:
         return arr[n//2]
 
 def get_valid_dataset_path() -> str:
+    """
+    Prompts the user to enter a dataset file path and validates its existence.
+
+    Continuously requests input until a valid file path is provided. A path is
+    considered valid if it exists and points to a file on the filesystem.
+
+    Displays a styled error message for invalid paths and re-prompts the user.
+
+    :return: string representing a valid dataset file path.
+    """
     while True:
         path = typer.prompt("Enter dataset path")
         if os.path.isfile(path):
@@ -122,6 +132,18 @@ def get_valid_dataset_path() -> str:
     return path
 
 def get_valid_k(datapoints: list[Datapoint]) -> int:
+    """
+    Prompts the user to enter a valid value of k for the KNN algorithm.
+
+    Continuously requests input until a valid integer k is provided. A valid k
+    must be strictly greater than 0 and strictly less than the number of datapoints in
+    the dataset.
+
+    Displays a styled error message for invalid values and re-prompts the user.
+
+    :param datapoints: list of Datapoint objects representing the dataset.
+    :return: integer representing a valid k value within the range (0, len(datapoints)).
+    """
     n = len(datapoints)
     while True:
         k_value = typer.prompt("Enter the value of k", type=int)
@@ -134,6 +156,18 @@ def get_valid_k(datapoints: list[Datapoint]) -> int:
     return k_value
 
 def display_column_names(console: Console, columns: list[str]) -> None:
+    """
+    Displays the available dataset column names in a formatted table.
+
+    Organizes column names into a fixed number of columns per row and renders
+    them using a rich table for improved readability. Adds spacing between rows
+    for visual separation.
+
+    :param console: Rich Console object used to render the table.
+    :param columns: list of strings representing the dataset column names.
+
+    :return: None
+    """
     table = Table(title="Available Columns")
 
     cols_per_row = 4
@@ -150,6 +184,19 @@ def display_column_names(console: Console, columns: list[str]) -> None:
     typer.echo(" ")
 
 def get_valid_categorical_label(columns: list[str]):
+    """
+    Prompts the user to enter a valid categorical label (column name).
+
+    Continuously requests input until the provided label matches one of the
+    available dataset columns.
+
+    Displays a styled error message for invalid column names and re-prompts
+    the user.
+
+    :param columns: list of strings representing the dataset column names.
+
+    :return: string representing a valid categorical label.
+    """
     temp_set = set(columns)
     while True:
         label = typer.prompt("Enter the column name of the categorical variable")
@@ -161,6 +208,20 @@ def get_valid_categorical_label(columns: list[str]):
     return label
 
 def get_normalization_requirement():
+    """
+    Prompts the user to determine whether feature normalization should be applied,
+    and if so, selects a valid normalization method.
+
+    First asks the user to confirm whether normalization is required. If enabled,
+    continuously requests input until a valid normalization method ("zscore" or
+    "minmax") is provided.
+
+    Displays a styled error message for invalid method inputs and re-prompts
+    the user.
+
+    :return: NormalizationMethods enum corresponding to the selected method,
+    or None if normalization is not enabled.
+    """
     normalize_method = None
     wants_normalization = typer.confirm("Enable feature normalization?")
     if wants_normalization:
@@ -174,6 +235,19 @@ def get_normalization_requirement():
     return NormalizationMethods(normalize_method.lower()) if normalize_method else None
 
 def get_model_pathway():
+    """
+    Prompts the user to select a valid model usage pathway.
+
+    Continuously requests input until the user provides either "classification"
+    or "evaluation". Input is normalized by stripping whitespace and converting
+    to lowercase before being returned.
+
+    This also ensures that the user cannot invoke both pathways simultaneously.
+
+    Displays a styled error message for invalid inputs and re-prompts the user.
+
+    :return: string representing the selected model pathway ("classification" or "evaluation").
+    """
     while True:
         pathway = typer.prompt("Enter model usage pathway (classification/evaluation)")
         if pathway.lower() in {"classification", "evaluation"}:
@@ -206,11 +280,23 @@ def get_valid_query_point(query_point: str) -> list[float]:
             numeric = float(val)
             result.append(numeric)
         except ValueError:
-            raise ValueError("Query datapoint contains non-numerical data.")
+            raise ValueError("Query datapoint contains non-numerical example_datasets.")
 
     return result
 
 def get_query_input(feature_index_map):
+    """
+    Prompts the user to enter values for each feature in the dataset.
+
+    Iterates through the feature index map and requests a numeric input for
+    each feature. Inputs are collected in order and stored as floating-point
+    values.
+
+    :param feature_index_map: dictionary mapping each feature name to its
+        corresponding index.
+
+    :return: list of floats representing the query point in feature order.
+    """
     values = []
     for feature in feature_index_map:
         val = typer.prompt(f"Enter feature value for \"{feature}\"", type = float)
@@ -220,10 +306,21 @@ def get_query_input(feature_index_map):
     return values
 
 def get_valid_dist_metric():
+    """
+    Prompts the user to enter a valid distance metric for the KNN algorithm.
+
+    Continuously requests input until a valid metric identifier ("eucl",
+    "manh", or "cos") is provided.
+
+    Displays a styled error message for invalid inputs and re-prompts
+    the user.
+
+    :return: Distances enum corresponding to the selected metric.
+    """
     metrics = {"eucl", "manh", "cos"}
     while True:
         metric = typer.prompt("Enter distance metric for algorithm (eucl/manh/cos)")
-        if metric in metrics:
+        if metric.lower() in metrics:
             typer.echo(" ")
             break
         typer.echo(typer.style("Distance metric must be either \"eucl\", \"manh\", or \"cos\"", fg=ERR_COLOR))
@@ -231,6 +328,28 @@ def get_valid_dist_metric():
     return Distances(metric.lower())
 
 def get_valid_plot_args(feature_index_map):
+    """
+    Prompts the user to configure plotting options and validates selected feature columns.
+
+    First asks whether plotting should be enabled. If enabled, requests valid
+    feature column names for the x-axis and y-axis. Optionally supports 3D plotting
+    by prompting for a z-axis feature.
+
+    Performs case-insensitive validation of feature names while preserving original
+    column naming for output consistency.
+
+    Displays styled error messages for invalid feature inputs and re-prompts
+    the user.
+
+    :param feature_index_map: dictionary mapping each feature name to its
+        corresponding index.
+
+    :return: tuple containing:
+        - boolean indicating whether plotting is enabled
+        - string representing x-axis feature (or None)
+        - string representing y-axis feature (or None)
+        - string representing z-axis feature (or None)
+    """
     original = {feature.lower() : feature for feature in feature_index_map}
     plot = typer.confirm("Enable plotting?")
     x, y, z = None, None, None
@@ -264,6 +383,17 @@ def get_valid_plot_args(feature_index_map):
         return plot, original[x.lower()], original[y.lower()], original[z.lower()] if z is not None else None
 
 def get_valid_tts_fraction():
+    """
+    Prompts the user to enter a valid train-test split fraction.
+
+    Continuously requests input until a floating-point value strictly between
+    0 and 1 is provided.
+
+    Displays a styled error message for invalid values and re-prompts
+    the user.
+
+    :return: float representing a valid train-test split fraction in the interval (0, 1).
+    """
     while True:
         frac = typer.prompt("Enter train-test-split fraction", type=float)
         if 0 < frac < 1:
@@ -316,6 +446,18 @@ def get_improvement_interpretation(improvement: float) -> str:
         return "Model has produced a very strong improvement (please verify dataset)."
 
 def landing_message(console: Console):
+    """
+    Displays the landing message for the CLI with usage guidance.
+
+    Renders a styled panel using Rich that provides an overview of required
+    inputs, supported options, and expected formats for interacting with the tool.
+    Covers dataset requirements, parameter constraints, and available configuration
+    choices.
+
+    :param console: Rich Console object used to render the panel.
+
+    :return: None
+    """
     console.print(Panel(
         Align.center(
             "[bold cyan]KNN Command Line Tool[/bold cyan]\n"
@@ -331,7 +473,7 @@ def landing_message(console: Console):
             "[bold white]Pathway[/bold white]\n"
             "[dim]classification - Predict a query point  |  evaluation - Measure model accuracy[/dim]\n\n"
             "[bold white]Train-Test Split[/bold white]\n"
-            "[dim]Fraction of data used for testing e.g. 0.2 = 80/20 split[/dim]\n\n"
+            "[dim]Fraction of example_datasets used for testing e.g. 0.2 = 80/20 split[/dim]\n\n"
             "[dim]Press Ctrl+C to exit at any time[/dim]"
         ),
         border_style="cyan",

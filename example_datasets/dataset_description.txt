@@ -1,0 +1,13 @@
+Here are 3 sample datasets to use with the tool! These datasets are not only a great starting point,
+but they also represent what format of datasets the tool is compatible with. A brief overview of each is as follows:
+
+- Iris dataset: Often considered the “Hello World” of data science and machine learning, this dataset is widely used
+to test and demonstrate classification algorithms. It consists of flower measurements used to predict the species
+of an iris.
+
+- Palmer Penguins dataset: Designed as a modern alternative to the Iris dataset, this dataset contains body size
+measurements for three penguin species.
+
+- Word Vectors dataset: This dataset contains pre-trained word embeddings, numerical representations of words as
+high-dimensional vectors. Obtained from GloVe, these embeddings capture both semantic and syntactic relationships,
+making them useful for tasks involving word meaning and similarity.

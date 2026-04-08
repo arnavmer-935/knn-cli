@@ -4,11 +4,13 @@ import csv
 def load_dataset(dataset: str, categorical_label: str) -> tuple[list[Datapoint], dict[str, int]]:
     """
     Parses an existing CSV file containing numeric feature values and a categorical label column.
-    Assumes that the last column is the category and all preceding columns are numeric features.
-    If the file is not found, prints an error message and returns empty results silently.
+    Users can enter any dataset column as the categorical variable column, provided that the rest
+    of the columns in the dataset have numeric values.
+    If the file is not found, prints an error message and asks for a new dataset path until a valid one
+    is obtained from the user.
 
-    :param categorical_label: #TODO
     :param dataset: file path of the training dataset.
+    :param categorical_label: the categorical label column in the dataset, given by the user.
 
     :return: a tuple containing a list of Datapoint objects and a dictionary mapping
     each feature column name to its 0-based index.

@@ -6,7 +6,7 @@ from knn_cli.cli import main
 app = typer.Typer()
 app.command()(main)
 
-IRIS = "data/iris.data"
+IRIS = "example_datasets/iris.example_datasets"
 IRIS_QUERY = "5.1 3.5 1.4 0.2"
 IRIS_CATEGORIES = {"Iris-setosa", "Iris-versicolor", "Iris-virginica"}
 IRIS_COLUMNS = ["sepal_length", "sepal_width", "petal_length", "petal_width"]

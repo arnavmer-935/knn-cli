@@ -16,7 +16,7 @@ def generate_plots(datapoints: list[Datapoint], feature_map: dict[str, int], k: 
     is generated. Each category is assigned a distinct color, and the query point
     is always rendered in yellow for visibility.
 
-    :param datapoints: list of Datapoint objects representing the training data.
+    :param datapoints: list of Datapoint objects representing the training example_datasets.
     :param feature_map: dictionary mapping each feature name to its 0-based index.
     :param k: number of nearest neighbors used in classification. Displayed in the plot title.
     :param query_data: the parsed query point as a list of floats.
