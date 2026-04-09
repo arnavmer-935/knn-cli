@@ -6,8 +6,6 @@
 
 ## What This Is
 
-Most KNN implementations are one-liners wrapping a library. This one isn't.
-
 This tool implements the KNN algorithm from the ground up — distance metrics, normalization, train-test splitting, baseline accuracy comparison, descriptive statistics, and 2D/3D visualization — all surfaced through a prompt-driven CLI that guides the user step by step, validates every input in real time, and produces Rich-formatted terminal output.
 
 Built as a first-semester CS lab assignment. Grew into something worth putting on a resume.
@@ -54,33 +52,28 @@ A help reference is displayed at launch covering all valid inputs and options. P
 
 ## What the Prompts Look Like
 
-```
-──────────────────────── Dataset Configuration ────────────────────────
+## Screenshots
 
-Enter dataset path: data/iris.data
+### Welcome Panel
+![Welcome Panel](screenshots/img1_welcome_panel.png)
 
-         Available Columns
-┌──────────────┬─────────────┬──────────────┐
-│ sepal_length │ sepal_width │ petal_length │
-│ petal_width  │ category    │              │
-└──────────────┴─────────────┴──────────────┘
+### Columns and Choosing Categorical Variable
+![Columns and Choosing Categorical Variable](screenshots/img2_displaycolumns_and_categoricalvar.png)
 
-Enter the column name of the categorical variable: category
-Enter the value of k: 5
-Enter distance metric for algorithm (eucl/manh/cos): eucl
-Enable feature normalization? [y/N]: y
-Enter normalization method (zscore/minmax): zscore
-Enter model usage pathway (classification/evaluation): classification
+### Dataset Configuration
+![Dataset Configuration](screenshots/img3_querypt_input_config_confirmation.png)
 
-Enter value for 'sepal_length': 5.1
-Enter value for 'sepal_width': 3.5
-Enter value for 'petal_length': 1.4
-Enter value for 'petal_width': 0.2
+### Dataset Stats and Classification Result
+![Dataset Stats and Classification Result](screenshots/img4_descstatistics_and_classification_out.png)
 
-──────────────────────────── Prediction ───────────────────────────────
-                         Iris-setosa
-───────────────────────────────────────────────────────────────────────
-```
+### Evaluation Result
+![Evaluation Result](screenshots/img5_evaluationpathway_normalization_penguins.png)
+
+### Plot Prompts
+![Plot Prompts](screenshots/img6_classification_and_plot_penguins.png)
+
+### 3D Scatter Plot
+![3D Scatter Plot](screenshots/img7_3Dplot_penguins.png)
 
 ---
 
