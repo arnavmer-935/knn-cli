@@ -31,7 +31,7 @@ Built as a first-semester CS lab assignment. Grew into something worth putting o
 **Requirements:** Python 3.10+
 
 ```bash
-git clone https://github.com/arnavmer-935/KNN-CLI-Tool.git
+git clone https://github.com/arnavmer-935/knn-cli.git
 cd KNN-CLI-Tool
 pip install -e .
 ```
