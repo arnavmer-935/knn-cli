@@ -159,6 +159,19 @@ No ML libraries. The algorithm is implemented from scratch.
 
 ---
 
+## Benchmark Results
+
+Evaluated on the [WDBC dataset](https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic) (569 instances, 30 features) across 10 runs with k=9, Euclidean distance, Min-Max normalization, and a 0.25 train-test split.
+
+| Metric | Value |
+|---|---|
+| Average Model Accuracy | 96.76% |
+| Average Baseline Accuracy | 62.67% |
+| Average Accuracy Improvement | +34.09% |
+| Accuracy Range | 95.07% – 98.59% |
+
+Baseline accuracy reflects a naive classifier that always predicts the majority class. The model's low variation across runs (model accuracy range of 3.52%) indicates a stable performance regardless of the split.
+
 ## License
 
 MIT
