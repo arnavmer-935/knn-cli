@@ -90,7 +90,7 @@ Three sample datasets are included in `data/`:
 |---|---|---|---|
 | `iris.data` | 150 | 4 | 3 |
 | `penguins.data` | 333 | 6 | 3 |
-| `words.data` | 400,000 | 50 | — |
+| `words.data` | 2,896 | 50 | 3 |
 
 The word vectors dataset (`words.data`) contains GloVe pre-trained word embeddings and is included as a stress test for high-dimensional inputs.
 
